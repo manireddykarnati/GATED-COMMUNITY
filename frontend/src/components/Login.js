@@ -1,8 +1,6 @@
-// src/components/Login.js
 import React, { useState } from 'react';
 import axios from 'axios';
 import './Login.css';
-
 
 function Login() {
   const [user_name, setUsername] = useState('');
@@ -14,6 +12,7 @@ function Login() {
     try {
       const res = await axios.post('http://localhost:5001/api/login', { user_name, password });
       setMessage(res.data.message);
+      // Optionally handle successful login: save token, redirect, etc.
     } catch (err) {
       setMessage(err.response?.data?.message || 'Login failed');
     }
@@ -42,10 +41,8 @@ function Login() {
         </form>
         <p className="message">{message}</p>
 
-        {/* Register link */}
         <p className="register-footer">
-          Don't have an account?{' '}
-          <a href="/register">Register here</a>
+          Don't have an account? <a href="/register">Register here</a>
         </p>
       </div>
     </div>

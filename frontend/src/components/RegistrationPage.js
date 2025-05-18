@@ -18,15 +18,12 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    setMessage(""); // reset message
+    setMessage("");
 
     try {
       const response = await fetch("http://localhost:5001/api/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
@@ -52,82 +49,64 @@ const Register = () => {
         <h2>Register</h2>
         <form onSubmit={handleSubmit}>
 
-          <div className="form-group">
-            <label className="register-label">User Type</label>
-            <input
-              type="text"
-              name="user_type"
-              value={formData.user_type}
-              onChange={handleChange}
-              className="register-input"
-              placeholder="owner, tenant, or admin"
-              required
-            />
-          </div>
+          <label>User Type</label>
+          <input
+            type="text"
+            name="user_type"
+            value={formData.user_type}
+            onChange={handleChange}
+            placeholder="owner, tenant, admin"
+            required
+          />
 
-          <div className="form-group">
-            <label className="register-label">User Name</label>
-            <input
-              type="text"
-              name="user_name"
-              value={formData.user_name}
-              onChange={handleChange}
-              className="register-input"
-              required
-            />
-          </div>
+          <label>User Name</label>
+          <input
+            type="text"
+            name="user_name"
+            value={formData.user_name}
+            onChange={handleChange}
+            required
+          />
 
-          <div className="form-group">
-            <label className="register-label">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="register-input"
-              required
-            />
-          </div>
+          <label>Email</label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
 
-          <div className="form-group">
-            <label className="register-label">Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="register-input"
-              required
-            />
-          </div>
+          <label>Password</label>
+          <input
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
 
-          <div className="form-group">
-            <label className="register-label">Organisation ID</label>
-            <input
-              type="number"
-              name="org_id"
-              value={formData.org_id}
-              onChange={handleChange}
-              className="register-input"
-              required
-            />
-          </div>
+          <label>Organisation ID</label>
+          <input
+            type="number"
+            name="org_id"
+            value={formData.org_id}
+            onChange={handleChange}
+            required
+          />
 
-          <div className="form-group">
-            <label className="register-label">Plot ID</label>
-            <input
-              type="number"
-              name="plot_id"
-              value={formData.plot_id}
-              onChange={handleChange}
-              className="register-input"
-              required
-            />
-          </div>
+          <label>Plot ID</label>
+          <input
+            type="number"
+            name="plot_id"
+            value={formData.plot_id}
+            onChange={handleChange}
+            required
+          />
 
-          <button type="submit" className="register-button">Register</button>
+          <button type="submit">Register</button>
         </form>
-        {message && <p style={{ marginTop: "1rem", color: "red", textAlign: "center" }}>{message}</p>}
+        {message && <p style={{ color: message.includes('successful') ? 'green' : 'red' }}>{message}</p>}
       </div>
     </div>
   );
