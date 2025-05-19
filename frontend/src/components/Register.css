@@ -1,85 +1,181 @@
-/* src/components/Register.css */
+/* Register Container: Full-screen centered layout with background image */
 
 .register-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
+    height: 100vh;
+    width: 100vw;
     background-image: url("https://images.pexels.com/photos/912110/pexels-photo-912110.jpeg?cs=srgb&dl=atmosphere-blue-sky-clouds-912110.jpg&fm=jpg");
     background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    width: 100vw;
-    overflow: hidden;
-}
-
-.register-box {
-    background: rgba(255, 255, 255, 0.95);
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    width: 100%;
-    max-width: 450px;
-}
-
-.register-box h2 {
-    text-align: center;
-    margin-bottom: 2rem;
-    color: #1a237e;
-}
-
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-.register-label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-    color: #333;
-}
-
-.register-input {
-    width: 100%;
-    padding: 0.8rem;
-    border-radius: 4px;
-    border: 1px solid #ddd;
-    font-size: 1rem;
+    background-color: #f5f7fa;
+    /* Fallback color */
+    padding: 1rem;
     box-sizing: border-box;
 }
 
+
+/* Register Box: Tall rectangular card */
+
+.register-box {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    max-width: 450px;
+    /* Matches image proportions */
+    min-height: 80vh;
+    /* Matches image proportions */
+    background: #ffffff;
+    padding: 2.5rem 3rem;
+    /* Matches image padding */
+    border-radius: 12px;
+    /* Matches image radius */
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    /* Matches image shadow */
+}
+
+
+/* Heading: Centered title */
+
+.register-box h2 {
+    text-align: center;
+    font-size: 1.75rem;
+    /* Matches image */
+    color: #0d1b60;
+    margin-bottom: 2rem;
+    /* Matches image spacing */
+    text-transform: uppercase;
+    /* Matches image */
+    font-weight: 700;
+    /* Slightly bolder to match image */
+}
+
+
+/* Form Group: Spacing for form elements */
+
+.form-group {
+    margin-bottom: 1.25rem;
+    /* Matches tighter spacing in image */
+}
+
+
+/* Label: Form field labels */
+
+.register-label {
+    display: block;
+    font-size: 0.95rem;
+    /* Matches image */
+    font-weight: 600;
+    color: #333333;
+    margin-bottom: 0.3rem;
+    /* Matches image spacing */
+    text-transform: uppercase;
+    /* Matches image label style */
+}
+
+
+/* Input and Select: Shared input styles */
+
+.register-input,
+.register-select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    /* Matches taller fields in image */
+    font-size: 1rem;
+    /* Matches image */
+    border: 1px solid #cccccc;
+    border-radius: 6px;
+    /* Matches image radius */
+    box-sizing: border-box;
+    height: 48px;
+    /* Matches image height */
+}
+
+
+/* Placeholder styles */
+
+.register-input::placeholder,
+.register-select:invalid {
+    color: #999999;
+    /* Matches placeholder color in image */
+    font-style: normal;
+    /* Matches image */
+    opacity: 1;
+    /* Ensures consistent rendering */
+}
+
+
+/* Select: Custom appearance with arrow */
+
+.register-select {
+    appearance: none;
+    background-color: #ffffff;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    /* Custom arrow to match image */
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1rem;
+    color: #999999;
+    /* Matches placeholder color */
+}
+
+
+/* Ensure the select shows placeholder-like text when no option is selected */
+
+.register-select:invalid {
+    color: #999999;
+}
+
+
+/* Error Message: Validation feedback */
+
 .register-error {
     color: #dc3545;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     margin-top: 0.25rem;
 }
 
+
+/* Button: Primary action button */
+
 .register-button {
     width: 100%;
-    padding: 0.8rem;
-    background-color: #1a237e;
-    color: white;
-    border-radius: 4px;
+    padding: 0.75rem;
+    /* Matches button height in image */
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #ffffff;
+    background-color: #0d1b60;
     border: none;
-    font-size: 1rem;
+    border-radius: 6px;
+    /* Matches image radius */
     cursor: pointer;
-    transition: transform 0.2s;
+    margin-top: 0.5rem;
+    /* Matches image spacing */
+    transition: background-color 0.3s ease;
+    text-transform: uppercase;
+    /* Matches image */
+    text-align: center;
+    /* Ensures text is centered */
 }
 
 .register-button:hover {
-    transform: translateY(-2px);
+    background-color: #0b1552;
 }
+
+
+/* Footer: Links below form (not visible in image, but retained) */
 
 .register-footer {
     text-align: center;
-    margin-top: 1rem;
-    font-size: 0.9rem;
+    font-size: 1rem;
+    margin-top: 2rem;
 }
 
 .register-footer a {
-    color: #1a237e;
-    text-decoration: none;
+    color: #0d1b60;
     font-weight: 600;
+    text-decoration: none;
 }
