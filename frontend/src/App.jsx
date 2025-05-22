@@ -9,8 +9,13 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Login Page is the default route */}
         <Route path="/" element={<Login />} />
+
+        {/* Register Page */}
         <Route path="/register" element={<Register />} />
+
+        {/* Dashboard Page */}
         <Route path="/dashboard/*" element={<Dashboard />} />
       </Routes>
     </Router>
