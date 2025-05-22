@@ -1,3 +1,5 @@
+import React from "react";
+
 export default function Settings() {
   return (
     <div className="p-6 bg-white rounded-lg shadow space-y-4">
