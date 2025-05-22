@@ -16,7 +16,7 @@ router.post('/register', async (req, res) => {
       [user_name, email]
     );
     if (userCheck.rows.length > 0) {
-      return res.status(400).json({ message: 'Username or Email already exists' });
+      return res.status(400).json({ success: false, message: 'Username or Email already exists' });
     }
 
     // Hash password
@@ -29,10 +29,10 @@ router.post('/register', async (req, res) => {
       [user_type, user_name, email, hashedPassword, org_id, plot_id]
     );
 
-    res.status(201).json({ message: 'User registered successfully', user: newUser.rows[0] });
+    res.status(201).json({ success: true, message: 'User registered successfully', user: newUser.rows[0] });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ message: 'Registration failed', error: error.message });
+    res.status(500).json({ success: false, message: 'Registration failed', error: error.message });
   }
 });
 
@@ -48,20 +48,21 @@ router.post('/login', async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(401).json({ message: 'User not found' });
+      return res.status(401).json({ success: false, message: 'User not found' });
     }
 
     const user = result.rows[0];
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid password' });
+      return res.status(401).json({ success: false, message: 'Invalid password' });
     }
 
-    res.status(200).json({ message: 'Login successful', user });
+    // Send success flag in response
+    res.status(200).json({ success: true, message: 'Login successful', user });
   } catch (error) {
     console.error('Login Error:', error);
-    res.status(500).json({ message: 'Login failed' });
+    res.status(500).json({ success: false, message: 'Login failed' });
   }
 });
 
