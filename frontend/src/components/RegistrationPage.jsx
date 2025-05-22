@@ -1,7 +1,9 @@
+// src/components/RegistrationPage.jsx
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Register.css";
 
-const Register = () => {
+const RegistrationPage = () => {
   const [formData, setFormData] = useState({
     user_type: "",
     user_name: "",
@@ -12,6 +14,8 @@ const Register = () => {
   });
 
   const [message, setMessage] = useState("");
+  const [showLoginButton, setShowLoginButton] = useState(false);
+  const navigate = useNavigate(); // For navigation
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -20,6 +24,7 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
+    setShowLoginButton(false);
 
     try {
       const response = await fetch("http://localhost:5001/api/register", {
@@ -31,7 +36,8 @@ const Register = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage("Registration successful!");
+        setMessage("Registration successful! You can now login.");
+        setShowLoginButton(true); // Show login button
       } else {
         setMessage(data.message || "Registration failed.");
         if (data.error) {
@@ -130,9 +136,18 @@ const Register = () => {
             {message}
           </p>
         )}
+
+        {showLoginButton && (
+          <button
+            className="register-login-button"
+            onClick={() => navigate("/")} // Navigate to login page at "/"
+          >
+            Go to Login
+          </button>
+        )}
       </div>
     </div>
   );
 };
 
-export default Register;
+export default RegistrationPage;
