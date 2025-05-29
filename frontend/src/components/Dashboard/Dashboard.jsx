@@ -1,20 +1,23 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
-import Sidebar from "../Sidebar"; // correct relative path to Sidebar.js
+import Sidebar from "./Sidebar";
 import DashboardHome from "./DashboardHome";
 import Notifications from "./Notifications";
 import Payments from "./PaymentHistory";
 import Plot from "./PlotInfo";
 import Profile from "./Profile";
 import Settings from "./Settings";
+import "./Dashboard.css"; // Import the CSS file
 
 const Dashboard = () => {
   return (
-    <div className="flex">
+    <div className="dashboard-container">
       <Sidebar />
-      <div className="flex-1 p-4 ml-64"> {/* add margin-left to avoid sidebar overlap */}
+      <div className="dashboard-content">
         <Routes>
-          <Route path="/" element={<DashboardHome />} />
+          {/* Default dashboard route */}
+          <Route index element={<DashboardHome />} />
+          <Route path="home" element={<DashboardHome />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="payments" element={<Payments />} />
           <Route path="plot" element={<Plot />} />

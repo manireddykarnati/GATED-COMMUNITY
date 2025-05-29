@@ -339,6 +339,7 @@ body, html, #root {
     box-shadow: 0 0 0 1px rgba(76, 175, 80, 0.3);
 }
 
+/* Input validation icon styling */
 .input-validation {
     position: absolute;
     right: 0.75rem;
@@ -348,9 +349,10 @@ body, html, #root {
     opacity: 0;
     transform: scale(0.8);
     transition: var(--transition);
+    z-index: 3;
 }
 
-.login-box input:valid:not(:placeholder-shown) + .input-validation {
+.input-group:has(input:valid:not(:placeholder-shown)) .input-validation {
     opacity: 1;
     transform: scale(1);
 }
@@ -416,12 +418,16 @@ body, html, #root {
     cursor: not-allowed;
     transform: none;
     pointer-events: none;
+    background: linear-gradient(135deg, var(--text-disabled), var(--text-muted));
+    animation: none;
 }
 
 /* Loading State */
 .login-box button.loading {
-    background: linear-gradient(135deg, var(--text-disabled), var(--text-muted));
+    background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
     animation: pulse 2s ease-in-out infinite;
+    cursor: wait;
+    pointer-events: none;
 }
 
 .login-box button.loading::after {
@@ -432,6 +438,7 @@ body, html, #root {
     border-top-color: var(--text-white);
     border-radius: 50%;
     animation: spin 1s linear infinite;
+    margin-left: 0.5rem;
 }
 
 /* Message Styling */
@@ -520,6 +527,11 @@ body, html, #root {
     transition: var(--transition);
     color: var(--text-muted);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .security-badge:hover {
@@ -528,6 +540,11 @@ body, html, #root {
     background: rgba(255, 255, 255, 0.18);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     color: var(--text-white);
+}
+
+.security-badge svg {
+    width: 16px;
+    height: 16px;
 }
 
 /* Enhanced Animations */
@@ -564,8 +581,8 @@ body, html, #root {
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 0.8; }
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
 }
 
 @keyframes fadeInUp {

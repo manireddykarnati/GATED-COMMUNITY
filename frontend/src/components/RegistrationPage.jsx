@@ -1,4 +1,3 @@
-// src/components/RegistrationPage.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Register.css";
@@ -7,144 +6,166 @@ const RegistrationPage = () => {
   const [formData, setFormData] = useState({
     user_type: "",
     user_name: "",
-    email: "",
     password: "",
     org_id: "",
     plot_id: "",
   });
-
   const [message, setMessage] = useState("");
-  const [showLoginButton, setShowLoginButton] = useState(false);
-  const navigate = useNavigate(); // For navigation
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     setMessage("");
-    setShowLoginButton(false);
+
+    // Convert string IDs to numbers
+    const submitData = {
+      ...formData,
+      org_id: parseInt(formData.org_id) || null,
+      plot_id: formData.user_type === 'admin' ? null : parseInt(formData.plot_id) || null,
+    };
 
     try {
-      const response = await fetch("http://localhost:5001/api/register", {
+      const response = await fetch("http://localhost:5000/api/auth/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(submitData),
       });
 
       const data = await response.json();
 
-      if (response.ok) {
-        setMessage("Registration successful! You can now login.");
-        setShowLoginButton(true); // Show login button
+      if (data.success) {
+        setMessage("Registration successful! Redirecting to login...");
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
       } else {
-        setMessage(data.message || "Registration failed.");
-        if (data.error) {
-          console.error("Backend error:", data.error);
-        }
+        setMessage(data.message || "Registration failed");
       }
     } catch (error) {
-      setMessage("Registration failed: Network error");
-      console.error("Fetch error:", error);
+      console.error("Registration error:", error);
+      setMessage("Registration failed. Please try again.");
     }
+    setIsLoading(false);
+  };
+
+  const handleLoginRedirect = () => {
+    navigate("/login");
   };
 
   return (
-    <div className="register-container">
-      <div className="register-box">
-        <h2>Register</h2>
+    <div className="registration-container">
+      <div className="registration-form">
+        <h2>Register for GCMS</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="register-label">User Type</label>
-            <input
-              className="register-input"
-              type="text"
+            <label htmlFor="user_type">User Type:</label>
+            <select
+              id="user_type"
               name="user_type"
               value={formData.user_type}
               onChange={handleChange}
-              placeholder="owner, tenant, admin"
               required
-            />
+              disabled={isLoading}
+            >
+              <option value="">Select User Type</option>
+              <option value="admin">Admin</option>
+              <option value="owner">Owner</option>
+              <option value="tenant">Tenant</option>
+            </select>
           </div>
 
           <div className="form-group">
-            <label className="register-label">User Name</label>
+            <label htmlFor="user_name">Username:</label>
             <input
-              className="register-input"
               type="text"
+              id="user_name"
               name="user_name"
               value={formData.user_name}
               onChange={handleChange}
               required
+              disabled={isLoading}
             />
           </div>
 
           <div className="form-group">
-            <label className="register-label">Email</label>
+            <label htmlFor="password">Password:</label>
             <input
-              className="register-input"
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="register-label">Password</label>
-            <input
-              className="register-input"
               type="password"
+              id="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
               required
+              disabled={isLoading}
             />
           </div>
 
           <div className="form-group">
-            <label className="register-label">Organisation ID</label>
+            <label htmlFor="org_id">Organization ID:</label>
             <input
-              className="register-input"
               type="number"
+              id="org_id"
               name="org_id"
               value={formData.org_id}
               onChange={handleChange}
               required
+              disabled={isLoading}
             />
           </div>
 
-          <div className="form-group">
-            <label className="register-label">Plot ID</label>
-            <input
-              className="register-input"
-              type="number"
-              name="plot_id"
-              value={formData.plot_id}
-              onChange={handleChange}
-              required
-            />
-          </div>
+          {formData.user_type !== 'admin' && (
+            <div className="form-group">
+              <label htmlFor="plot_id">Plot ID:</label>
+              <input
+                type="number"
+                id="plot_id"
+                name="plot_id"
+                value={formData.plot_id}
+                onChange={handleChange}
+                required={formData.user_type !== 'admin'}
+                disabled={isLoading}
+              />
+            </div>
+          )}
 
-          <button className="register-button" type="submit">Register</button>
+          <button 
+            type="submit" 
+            disabled={isLoading}
+            className={isLoading ? 'loading' : ''}
+          >
+            {isLoading ? 'Registering...' : 'Register'}
+          </button>
         </form>
 
         {message && (
-          <p className={message.includes("successful") ? "register-success" : "register-error"}>
+          <p className={`message ${message.includes('successful') ? 'success' : 'error'}`}>
             {message}
           </p>
         )}
 
-        {showLoginButton && (
-          <button
-            className="register-login-button"
-            onClick={() => navigate("/")} // Navigate to login page at "/"
+        <div className="login-link">
+          <p>Already have an account?</p>
+          <button 
+            type="button" 
+            onClick={handleLoginRedirect}
+            className="login-btn"
+            disabled={isLoading}
           >
-            Go to Login
+            Login Here
           </button>
-        )}
+        </div>
       </div>
     </div>
   );
