@@ -2,38 +2,157 @@ import React from "react";
 
 export default function DashboardHome() {
   return (
-    <div className="space-y-8 p-8 bg-white rounded-xl shadow-lg w-full">
-      <h1 className="text-4xl font-extrabold text-indigo-700 border-b-4 border-indigo-400 pb-3 mb-6">
-        Welcome to GCMS
-      </h1>
+    <>
+      <style>{`
+        .dashboard-container {
+          max-width: 900px;
+          margin: 40px auto;
+          padding: 40px;
+          background-color: #ffffff;
+          border-radius: 16px;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
 
-      <div className="bg-gradient-to-r from-blue-100 to-blue-200 p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300">
-        <p className="text-lg font-semibold text-blue-900 mb-2">
-          Street: <span className="font-normal text-blue-800">XYZ Street</span>
-        </p>
-        <p className="text-lg font-semibold text-blue-900 mb-2">
-          Plot: <span className="font-normal text-blue-800">101</span>
-        </p>
-        <p className="text-lg font-semibold text-blue-900">
-          Ownership: <span className="font-normal text-blue-800">Owner</span>
-        </p>
-      </div>
+        .dashboard-title {
+          font-size: 36px;
+          font-weight: 800;
+          color: #4f46e5;
+          border-bottom: 4px solid #818cf8;
+          padding-bottom: 12px;
+          margin-bottom: 40px;
+        }
 
-      <div className="grid grid-cols-2 gap-6">
-        <div className="bg-gradient-to-tr from-green-100 to-green-200 p-5 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 text-green-900">
-          <p className="text-sm uppercase tracking-wide font-semibold">Last Payment</p>
-          <p className="text-2xl font-extrabold mt-1">2025-04-20</p>
+        .info-box {
+          background: linear-gradient(to right, #dbeafe, #bfdbfe);
+          padding: 24px;
+          border-radius: 16px;
+          margin-bottom: 32px;
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+          transition: box-shadow 0.3s ease;
+        }
+
+        .info-box:hover {
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .info-text {
+          font-size: 18px;
+          font-weight: 600;
+          color: #1e3a8a;
+          margin-bottom: 8px;
+        }
+
+        .info-text span {
+          font-weight: 500;
+          color: #1e40af;
+        }
+
+        .grid-container {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 24px;
+          margin-bottom: 32px;
+        }
+
+        .card {
+          padding: 20px;
+          border-radius: 16px;
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+          transition: box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-green {
+          background: linear-gradient(to top right, #d1fae5, #bbf7d0);
+          color: #065f46;
+        }
+
+        .card-red {
+          background: linear-gradient(to top right, #fecaca, #fca5a5);
+          color: #991b1b;
+        }
+
+        .card-label {
+          font-size: 14px;
+          text-transform: uppercase;
+          font-weight: 600;
+          margin-bottom: 6px;
+        }
+
+        .card-value {
+          font-size: 26px;
+          font-weight: 800;
+        }
+
+        .notification-box {
+          background: linear-gradient(to right, #fef3c7, #fde68a);
+          padding: 20px;
+          border-radius: 16px;
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+          color: #92400e;
+        }
+
+        .notification-box:hover {
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .notification-label {
+          font-size: 14px;
+          text-transform: uppercase;
+          font-weight: 600;
+        }
+
+        .notification-message {
+          margin-top: 2px;
+          font-size: 17px;
+          font-weight: 500;
+        }
+
+        @media (max-width: 600px) {
+          .dashboard-container {
+            padding: 24px;
+          }
+
+          .dashboard-title {
+            font-size: 28px;
+          }
+        }
+      `}</style>
+
+      <div className="dashboard-container">
+        <h1 className="dashboard-title">Welcome to GCMS</h1>
+
+        <div className="info-box">
+          <p className="info-text">
+            Street: <span>XYZ Street</span>
+          </p>
+          <p className="info-text">
+            Plot: <span>101</span>
+          </p>
+          <p className="info-text">
+            Ownership: <span>Owner</span>
+          </p>
         </div>
-        <div className="bg-gradient-to-tr from-red-100 to-red-200 p-5 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 text-red-900">
-          <p className="text-sm uppercase tracking-wide font-semibold">Outstanding Amount</p>
-          <p className="text-2xl font-extrabold mt-1">₹3,000</p>
+
+        <div className="grid-container">
+          <div className="card card-green">
+            <p className="card-label">Last Payment</p>
+            <p className="card-value">2025-04-20</p>
+          </div>
+          <div className="card card-red">
+            <p className="card-label">Outstanding Amount</p>
+            <p className="card-value">₹3,000</p>
+          </div>
+        </div>
+
+        <div className="notification-box">
+          <p className="notification-label">Recent Notification</p>
+          <p className="notification-message">Maintenance due soon</p>
         </div>
       </div>
-
-      <div className="bg-gradient-to-r from-yellow-100 to-yellow-200 p-5 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 text-yellow-900">
-        <p className="text-sm uppercase tracking-wide font-semibold">Recent Notification</p>
-        <p className="font-medium mt-1">Maintenance due soon</p>
-      </div>
-    </div>
+    </>
   );
 }

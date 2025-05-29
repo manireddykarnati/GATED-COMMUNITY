@@ -1,29 +1,79 @@
 import React from "react";
+
 export default function PaymentHistory() {
   return (
-    <div className="p-8 w-full bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 space-y-6">
-      <h2 className="text-3xl font-extrabold text-indigo-700 border-b-4 border-indigo-400 pb-2">
-        My Payment History
-      </h2>
+    <>
+      <style>{`
+        .payment-container {
+          padding: 32px;
+          width: 100%;
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+          transition: box-shadow 0.3s ease;
+          max-width: 700px;
+          margin: 0 auto;
+        }
 
-      <div className="space-y-3">
-        <p className="text-gray-700 text-lg">
-          <span className="font-semibold text-indigo-800">Date:</span> 2025-04-20
-        </p>
-        <p className="text-gray-700 text-lg">
-          <span className="font-semibold text-indigo-800">Amount:</span> ₹3,000
-        </p>
-        <p className="text-gray-700 text-lg">
-          <span className="font-semibold text-indigo-800">Mode:</span> UPI
-        </p>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-          Download Receipt
-        </button>
+        .payment-container:hover {
+          box-shadow: 0 10px 28px rgba(0, 0, 0, 0.15);
+        }
+
+        .payment-title {
+          font-size: 28px;
+          font-weight: 800;
+          color: #4f46e5;
+          border-bottom: 4px solid #818cf8;
+          padding-bottom: 12px;
+          margin-bottom: 24px;
+        }
+
+        .payment-info p {
+          font-size: 18px;
+          color: #374151;
+          margin-bottom: 12px;
+        }
+
+        .payment-info span {
+          font-weight: 600;
+          color: #4338ca;
+        }
+
+        .download-btn {
+          background-color: #2563eb;
+          color: white;
+          padding: 10px 20px;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          font-size: 16px;
+          transition: background-color 0.3s ease;
+        }
+
+        .download-btn:hover {
+          background-color: #1e40af;
+        }
+
+        .outstanding {
+          color: #dc2626;
+          font-weight: bold;
+          font-size: 18px;
+          margin-top: 24px;
+        }
+      `}</style>
+
+      <div className="payment-container">
+        <h2 className="payment-title">My Payment History</h2>
+
+        <div className="payment-info">
+          <p><span>Date:</span> 2025-04-20</p>
+          <p><span>Amount:</span> ₹3,000</p>
+          <p><span>Mode:</span> UPI</p>
+          <button className="download-btn">Download Receipt</button>
+        </div>
+
+        <p className="outstanding">Outstanding: ₹3,000</p>
       </div>
-
-      <p className="text-red-600 font-bold text-lg">
-        Outstanding: ₹3,000
-      </p>
-    </div>
+    </>
   );
 }

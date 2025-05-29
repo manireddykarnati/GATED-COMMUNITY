@@ -11,62 +11,133 @@ export default function Profile() {
   };
 
   return (
-    <div className="p-8 w-full bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 space-y-6">
-      <h2 className="text-3xl font-extrabold text-indigo-700 border-b-4 border-indigo-400 pb-2">
-        My Profile
-      </h2>
+    <>
+      <style>{`
+        .profile-container {
+          padding: 32px;
+          width: 100%;
+          background-color: #ffffff;
+          border-radius: 10px;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+          transition: box-shadow 0.3s ease;
+          margin: 0 auto;
+          max-width: 700px;
+        }
 
-      <div className="flex items-center space-x-6">
-        <img
-          src={profile.avatar}
-          alt="Profile"
-          className="w-24 h-24 rounded-full shadow-md border-4 border-indigo-300"
-        />
-        <div className="space-y-2 text-lg text-gray-700">
-          {editMode ? (
-            <>
-              <input
-                type="text"
-                defaultValue={profile.name}
-                className="w-full p-2 border rounded"
-              />
-              <input
-                type="email"
-                defaultValue={profile.email}
-                className="w-full p-2 border rounded"
-              />
-              <input
-                type="text"
-                defaultValue={profile.contact}
-                className="w-full p-2 border rounded"
-              />
-              <input type="file" className="w-full p-2 border rounded" />
-            </>
-          ) : (
-            <>
-              <p>
-                <span className="font-semibold text-indigo-800">Name:</span> {profile.name}
-              </p>
-              <p>
-                <span className="font-semibold text-indigo-800">Email:</span> {profile.email}
-              </p>
-              <p>
-                <span className="font-semibold text-indigo-800">Contact:</span> {profile.contact}
-              </p>
-              <p>
-                <span className="font-semibold text-indigo-800">Profile Picture:</span> Uploaded
-              </p>
-            </>
-          )}
+        .profile-container:hover {
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .profile-title {
+          font-size: 28px;
+          font-weight: 800;
+          color: #4f46e5;
+          border-bottom: 4px solid #818cf8;
+          padding-bottom: 10px;
+          margin-bottom: 24px;
+        }
+
+        .profile-flex {
+          display: flex;
+          align-items: center;
+          gap: 24px;
+        }
+
+        .profile-avatar {
+          width: 96px;
+          height: 96px;
+          border-radius: 50%;
+          border: 4px solid #a5b4fc;
+          box-shadow: 0 0 6px rgba(0,0,0,0.1);
+        }
+
+        .profile-info {
+          font-size: 16px;
+          color: #374151;
+          flex-grow: 1;
+        }
+
+        .profile-info p {
+          margin-bottom: 12px;
+        }
+
+        .profile-info span {
+          font-weight: 600;
+          color: #4338ca;
+        }
+
+        .profile-input {
+          width: 100%;
+          padding: 8px;
+          border-radius: 4px;
+          border: 1px solid #ccc;
+          margin-bottom: 10px;
+        }
+
+        .profile-button {
+          background-color: #2563eb;
+          color: white;
+          padding: 10px 20px;
+          border-radius: 6px;
+          border: none;
+          cursor: pointer;
+          font-size: 16px;
+          transition: background-color 0.3s ease;
+          margin-top: 20px;
+        }
+
+        .profile-button:hover {
+          background-color: #1d4ed8;
+        }
+      `}</style>
+
+      <div className="profile-container">
+        <h2 className="profile-title">My Profile</h2>
+
+        <div className="profile-flex">
+          <img
+            src={profile.avatar}
+            alt="Profile"
+            className="profile-avatar"
+          />
+          <div className="profile-info">
+            {editMode ? (
+              <>
+                <input
+                  type="text"
+                  defaultValue={profile.name}
+                  className="profile-input"
+                />
+                <input
+                  type="email"
+                  defaultValue={profile.email}
+                  className="profile-input"
+                />
+                <input
+                  type="text"
+                  defaultValue={profile.contact}
+                  className="profile-input"
+                />
+                <input type="file" className="profile-input" />
+              </>
+            ) : (
+              <>
+                <p><span>Name:</span> {profile.name}</p>
+                <p><span>Email:</span> {profile.email}</p>
+                <p><span>Contact:</span> {profile.contact}</p>
+                <p><span>Profile Picture:</span> Uploaded</p>
+              </>
+            )}
+          </div>
         </div>
-      </div>
 
-      <button
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-        onClick={() => setEditMode(!editMode)}
-      >
-        {editMode ? "Save Profile" : "Edit Profile"}
-      </button>
-    </div>
+        <button
+          className="profile-button"
+          onClick={() => setEditMode(!editMode)}
+        >
+          {editMode ? "Save Profile" : "Edit Profile"}
+        </button>
+      </div>
+    </>
   );
 }
