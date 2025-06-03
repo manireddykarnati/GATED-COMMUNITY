@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Button,
   Paper,
+  Typography,
+  Button,
   Table,
   TableBody,
   TableCell,
@@ -14,328 +15,700 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  IconButton,
-  Typography,
+  MenuItem,
   FormControl,
   InputLabel,
   Select,
-  MenuItem,
   Chip,
+  IconButton,
+  Grid,
+  Alert,
+  CircularProgress,
+  TablePagination,
+  Card,
+  CardContent,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
-  Delete as DeleteIcon,
-  Send as SendIcon,
+  Visibility as ViewIcon,
+  FilterList as FilterIcon,
+  Payment as PaymentIcon,
+  MonetizationOn,
+  PendingActions,
+  CheckCircle,
 } from '@mui/icons-material';
+import axios from 'axios';
 
-const PaymentsManagement = () => {
-  const [payments, setPayments] = useState([
-    {
-      id: 1,
-      plotId: 1,
-      flatId: null,
-      amount: 5000,
-      type: 'Maintenance',
-      status: 'Paid',
-      dueDate: '2025-06-01',
-      paidDate: '2025-05-15',
-    },
-    {
-      id: 2,
-      plotId: 2,
-      flatId: 1,
-      amount: 3000,
-      type: 'Maintenance',
-      status: 'Pending',
-      dueDate: '2025-06-01',
-      paidDate: null,
-    },
-  ]);
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-  const [plots] = useState([
-    { id: 1, number: 'P101', type: 'Individual' },
-    { id: 2, number: 'P102', type: 'Flats', flats: [
-      { id: 1, number: '101' },
-      { id: 2, number: '102' },
-    ]},
-  ]);
-
+const PaymentsManagement = ({ userData }) => {
+  const [payments, setPayments] = useState([]);
+  const [plots, setPlots] = useState([]);
+  const [residents, setResidents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  
+  // Dialog states
   const [openDialog, setOpenDialog] = useState(false);
-  const [editingPayment, setEditingPayment] = useState(null);
-  const [selectedPlot, setSelectedPlot] = useState(null);
-
+  const [dialogType, setDialogType] = useState('add'); // 'add', 'edit', 'view'
+  const [selectedPayment, setSelectedPayment] = useState(null);
+  
+  // Pagination
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  
+  // Filter states
+  const [statusFilter, setStatusFilter] = useState('');
+  const [currentTab, setCurrentTab] = useState(0);
+  
+  // Form data
   const [formData, setFormData] = useState({
-    plotId: '',
-    flatId: '',
+    plot_id: '',
+    resident_id: '',
     amount: '',
-    type: 'Maintenance',
-    dueDate: '',
-    status: 'Pending',
+    payment_type: '',
+    due_date: '',
+    payment_method: '',
+    transaction_id: '',
+    notes: '',
+    status: 'pending'
   });
 
-  const handleOpenDialog = (payment = null) => {
-    if (payment) {
-      setEditingPayment(payment);
-      setFormData({
-        plotId: payment.plotId,
-        flatId: payment.flatId,
-        amount: payment.amount,
-        type: payment.type,
-        dueDate: payment.dueDate,
-        status: payment.status,
-      });
-      setSelectedPlot(plots.find(p => p.id === payment.plotId));
-    } else {
-      setEditingPayment(null);
-      setFormData({
-        plotId: '',
-        flatId: '',
-        amount: '',
-        type: 'Maintenance',
-        dueDate: '',
-        status: 'Pending',
-      });
-      setSelectedPlot(null);
+  const paymentTypes = [
+    'Maintenance Fee',
+    'Water Bill',
+    'Electricity Bill',
+    'Security Charges',
+    'Parking Fee',
+    'Other'
+  ];
+
+  const paymentMethods = [
+    'Cash',
+    'Online Transfer',
+    'Cheque',
+    'Bank Transfer',
+    'UPI',
+    'Card Payment'
+  ];
+
+  const statusOptions = [
+    { value: 'pending', label: 'Pending', color: 'warning' },
+    { value: 'paid', label: 'Paid', color: 'success' },
+    { value: 'overdue', label: 'Overdue', color: 'error' }
+  ];
+
+  const tabLabels = ['All Payments', 'Pending', 'Paid', 'Overdue'];
+  const tabFilters = ['', 'pending', 'paid', 'overdue'];
+
+  useEffect(() => {
+    if (userData?.org_id) {
+      fetchPayments();
+      fetchPlots();
+      fetchResidents();
     }
+  }, [userData, page, rowsPerPage, statusFilter]);
+
+  const fetchPayments = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({
+        page: page + 1,
+        limit: rowsPerPage,
+      });
+      
+      if (statusFilter) {
+        params.append('status', statusFilter);
+      }
+
+      const response = await axios.get(
+        `${API_BASE_URL}/admin/payments/${userData.org_id}?${params}`
+      );
+      
+      if (response.data.success) {
+        setPayments(response.data.data);
+        setTotalCount(response.data.pagination.total);
+      } else {
+        setError('Failed to fetch payments');
+      }
+    } catch (error) {
+      console.error('Fetch payments error:', error);
+      setError('Failed to load payments data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchPlots = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/admin/plots-dropdown/${userData.org_id}`);
+      if (response.data.success) {
+        setPlots(response.data.data);
+      }
+    } catch (error) {
+      console.error('Fetch plots error:', error);
+    }
+  };
+
+  const fetchResidents = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/admin/residents/${userData.org_id}`);
+      if (response.data.success) {
+        setResidents(response.data.data);
+      }
+    } catch (error) {
+      console.error('Fetch residents error:', error);
+    }
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setCurrentTab(newValue);
+    setStatusFilter(tabFilters[newValue]);
+    setPage(0);
+  };
+
+  const handleOpenDialog = (type, payment = null) => {
+    setDialogType(type);
+    setSelectedPayment(payment);
+    
+    if (type === 'add') {
+      setFormData({
+        plot_id: '',
+        resident_id: '',
+        amount: '',
+        payment_type: '',
+        due_date: '',
+        payment_method: '',
+        transaction_id: '',
+        notes: '',
+        status: 'pending'
+      });
+    } else if (type === 'edit' && payment) {
+      setFormData({
+        plot_id: payment.plot_id || '',
+        resident_id: payment.resident_id || '',
+        amount: payment.amount || '',
+        payment_type: payment.payment_type || '',
+        due_date: payment.due_date ? payment.due_date.split('T')[0] : '',
+        payment_method: payment.payment_method || '',
+        transaction_id: payment.transaction_id || '',
+        notes: payment.notes || '',
+        status: payment.status || 'pending'
+      });
+    }
+    
     setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
-    setEditingPayment(null);
-    setSelectedPlot(null);
+    setSelectedPayment(null);
+    setFormData({
+      plot_id: '',
+      resident_id: '',
+      amount: '',
+      payment_type: '',
+      due_date: '',
+      payment_method: '',
+      transaction_id: '',
+      notes: '',
+      status: 'pending'
+    });
+    setError(null);
+    setSuccess(null);
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: value
     }));
+  };
 
-    if (name === 'plotId') {
-      setSelectedPlot(plots.find(p => p.id === value));
-      setFormData(prev => ({ ...prev, flatId: '' }));
+  const handleSubmit = async () => {
+    try {
+      setLoading(true);
+      
+      if (dialogType === 'add') {
+        const response = await axios.post(`${API_BASE_URL}/admin/payments`, formData);
+        if (response.data.success) {
+          setSuccess('Payment record created successfully');
+          fetchPayments();
+          handleCloseDialog();
+        } else {
+          setError('Failed to create payment record');
+        }
+      } else if (dialogType === 'edit') {
+        const updateData = {
+          status: formData.status,
+          payment_method: formData.payment_method,
+          transaction_id: formData.transaction_id,
+          notes: formData.notes
+        };
+        
+        const response = await axios.put(
+          `${API_BASE_URL}/admin/payments/${selectedPayment.payment_id}`,
+          updateData
+        );
+        
+        if (response.data.success) {
+          setSuccess('Payment updated successfully');
+          fetchPayments();
+          handleCloseDialog();
+        } else {
+          setError('Failed to update payment');
+        }
+      }
+    } catch (error) {
+      console.error('Submit error:', error);
+      setError(error.response?.data?.message || 'An error occurred');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSubmit = () => {
-    const currentDate = new Date().toISOString().split('T')[0];
-    const newPaymentData = {
-      ...formData,
-      paidDate: formData.status === 'Paid' ? currentDate : null,
-    };
+  const getStatusChip = (status) => {
+    const statusConfig = statusOptions.find(s => s.value === status);
+    return (
+      <Chip
+        label={statusConfig?.label || status}
+        color={statusConfig?.color || 'default'}
+        size="small"
+      />
+    );
+  };
 
-    if (editingPayment) {
-      setPayments((prev) =>
-        prev.map((payment) =>
-          payment.id === editingPayment.id
-            ? { ...payment, ...newPaymentData }
-            : payment
-        )
-      );
-    } else {
-      const newPayment = {
-        id: payments.length + 1,
-        ...newPaymentData,
-      };
-      setPayments((prev) => [...prev, newPayment]);
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-IN');
+  };
+
+  // Calculate summary stats
+  const summaryStats = payments.reduce((acc, payment) => {
+    acc.total += parseFloat(payment.amount || 0);
+    if (payment.status === 'paid') {
+      acc.collected += parseFloat(payment.amount || 0);
+    } else if (payment.status === 'pending') {
+      acc.pending += parseFloat(payment.amount || 0);
+    } else if (payment.status === 'overdue') {
+      acc.overdue += parseFloat(payment.amount || 0);
     }
-    handleCloseDialog();
-  };
+    return acc;
+  }, { total: 0, collected: 0, pending: 0, overdue: 0 });
 
-  const handleDelete = (paymentId) => {
-    if (window.confirm('Are you sure you want to delete this payment?')) {
-      setPayments((prev) => prev.filter((payment) => payment.id !== paymentId));
-    }
-  };
-
-  const handleSendReminder = (payment) => {
-    // Implement payment reminder logic here
-    alert(`Payment reminder sent for Plot ${getPaymentLocation(payment)}`);
-  };
-
-  const getPaymentLocation = (payment) => {
-    const plot = plots.find(p => p.id === payment.plotId);
-    if (!plot) return 'Unknown';
-    
-    if (plot.type === 'Individual') {
-      return `Plot ${plot.number}`;
-    } else {
-      const flat = plot.flats.find(f => f.id === payment.flatId);
-      return `Plot ${plot.number}, Flat ${flat?.number || 'Unknown'}`;
-    }
-  };
-
-  const getStatusChipColor = (status) => {
-    switch (status) {
-      case 'Paid':
-        return 'success';
-      case 'Pending':
-        return 'warning';
-      case 'Overdue':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
+  if (loading && payments.length === 0) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
-    <Box>
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6">Payments Management</Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenDialog()}
-        >
-          Add Payment
-        </Button>
-      </Box>
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h4" gutterBottom>
+        Payments Management
+      </Typography>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Location</TableCell>
-              <TableCell>Amount</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Due Date</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Paid Date</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {payments.map((payment) => (
-              <TableRow key={payment.id}>
-                <TableCell>{getPaymentLocation(payment)}</TableCell>
-                <TableCell>₹{payment.amount}</TableCell>
-                <TableCell>{payment.type}</TableCell>
-                <TableCell>{payment.dueDate}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={payment.status}
-                    color={getStatusChipColor(payment.status)}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>{payment.paidDate || '-'}</TableCell>
-                <TableCell>
-                  <IconButton
-                    color="primary"
-                    onClick={() => handleOpenDialog(payment)}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton
-                    color="error"
-                    onClick={() => handleDelete(payment.id)}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                  {payment.status === 'Pending' && (
-                    <IconButton
-                      color="primary"
-                      onClick={() => handleSendReminder(payment)}
-                    >
-                      <SendIcon />
-                    </IconButton>
-                  )}
-                </TableCell>
-              </TableRow>
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
+      {success && (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess(null)}>
+          {success}
+        </Alert>
+      )}
+
+      {/* Summary Cards */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center">
+                <MonetizationOn color="primary" sx={{ mr: 1 }} />
+                <Box>
+                  <Typography variant="h6">Total Amount</Typography>
+                  <Typography variant="h4" color="primary">
+                    {formatCurrency(summaryStats.total)}
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center">
+                <CheckCircle color="success" sx={{ mr: 1 }} />
+                <Box>
+                  <Typography variant="h6">Collected</Typography>
+                  <Typography variant="h4" color="success.main">
+                    {formatCurrency(summaryStats.collected)}
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center">
+                <PendingActions color="warning" sx={{ mr: 1 }} />
+                <Box>
+                  <Typography variant="h6">Pending</Typography>
+                  <Typography variant="h4" color="warning.main">
+                    {formatCurrency(summaryStats.pending)}
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center">
+                <PaymentIcon color="error" sx={{ mr: 1 }} />
+                <Box>
+                  <Typography variant="h6">Overdue</Typography>
+                  <Typography variant="h4" color="error.main">
+                    {formatCurrency(summaryStats.overdue)}
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      <Paper sx={{ p: 2 }}>
+        {/* Header with Add Button and Tabs */}
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Tabs value={currentTab} onChange={handleTabChange}>
+            {tabLabels.map((label, index) => (
+              <Tab key={index} label={label} />
             ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+          </Tabs>
+          
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => handleOpenDialog('add')}
+          >
+            Add Payment
+          </Button>
+        </Box>
 
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
+        {/* Payments Table */}
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Payment ID</TableCell>
+                <TableCell>Plot/Resident</TableCell>
+                <TableCell>Amount</TableCell>
+                <TableCell>Payment Type</TableCell>
+                <TableCell>Due Date</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Payment Method</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {payments.map((payment) => (
+                <TableRow key={payment.payment_id}>
+                  <TableCell>#{payment.payment_id}</TableCell>
+                  <TableCell>
+                    <Box>
+                      <Typography variant="body2" fontWeight="bold">
+                        Plot {payment.plot_no}
+                      </Typography>
+                      <Typography variant="caption" color="textSecondary">
+                        {payment.resident_name || 'N/A'}
+                      </Typography>
+                      {payment.street_name && (
+                        <Typography variant="caption" display="block" color="textSecondary">
+                          {payment.street_name}
+                        </Typography>
+                      )}
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" fontWeight="bold">
+                      {formatCurrency(payment.amount)}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>{payment.payment_type}</TableCell>
+                  <TableCell>{formatDate(payment.due_date)}</TableCell>
+                  <TableCell>{getStatusChip(payment.status)}</TableCell>
+                  <TableCell>{payment.payment_method || 'N/A'}</TableCell>
+                  <TableCell>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleOpenDialog('view', payment)}
+                      title="View Details"
+                    >
+                      <ViewIcon />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleOpenDialog('edit', payment)}
+                      title="Edit Payment"
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        {/* Pagination */}
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          component="div"
+          count={totalCount}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={(event, newPage) => setPage(newPage)}
+          onRowsPerPageChange={(event) => {
+            setRowsPerPage(parseInt(event.target.value, 10));
+            setPage(0);
+          }}
+        />
+      </Paper>
+
+      {/* Add/Edit Payment Dialog */}
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <DialogTitle>
-          {editingPayment ? 'Edit Payment' : 'Add New Payment'}
+          {dialogType === 'add' && 'Add New Payment'}
+          {dialogType === 'edit' && 'Edit Payment'}
+          {dialogType === 'view' && 'Payment Details'}
         </DialogTitle>
         <DialogContent>
-          <FormControl fullWidth margin="dense">
-            <InputLabel>Plot</InputLabel>
-            <Select
-              name="plotId"
-              value={formData.plotId}
-              onChange={handleInputChange}
-            >
-              {plots.map((plot) => (
-                <MenuItem key={plot.id} value={plot.id}>
-                  Plot {plot.number}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          {selectedPlot?.type === 'Flats' && (
-            <FormControl fullWidth margin="dense">
-              <InputLabel>Flat</InputLabel>
-              <Select
-                name="flatId"
-                value={formData.flatId}
-                onChange={handleInputChange}
-              >
-                {selectedPlot.flats.map((flat) => (
-                  <MenuItem key={flat.id} value={flat.id}>
-                    Flat {flat.number}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          )}
-          <TextField
-            margin="dense"
-            name="amount"
-            label="Amount"
-            type="number"
-            fullWidth
-            value={formData.amount}
-            onChange={handleInputChange}
-          />
-          <FormControl fullWidth margin="dense">
-            <InputLabel>Type</InputLabel>
-            <Select
-              name="type"
-              value={formData.type}
-              onChange={handleInputChange}
-            >
-              <MenuItem value="Maintenance">Maintenance</MenuItem>
-              <MenuItem value="Security">Security</MenuItem>
-              <MenuItem value="Utility">Utility</MenuItem>
-            </Select>
-          </FormControl>
-          <TextField
-            margin="dense"
-            name="dueDate"
-            label="Due Date"
-            type="date"
-            fullWidth
-            value={formData.dueDate}
-            onChange={handleInputChange}
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
-          <FormControl fullWidth margin="dense">
-            <InputLabel>Status</InputLabel>
-            <Select
-              name="status"
-              value={formData.status}
-              onChange={handleInputChange}
-            >
-              <MenuItem value="Pending">Pending</MenuItem>
-              <MenuItem value="Paid">Paid</MenuItem>
-              <MenuItem value="Overdue">Overdue</MenuItem>
-            </Select>
-          </FormControl>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            {dialogType !== 'view' && (
+              <>
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Plot</InputLabel>
+                    <Select
+                      name="plot_id"
+                      value={formData.plot_id}
+                      onChange={handleInputChange}
+                      disabled={dialogType === 'edit'}
+                    >
+                      {plots.map((plot) => (
+                        <MenuItem key={plot.plot_id} value={plot.plot_id}>
+                          Plot {plot.plot_no}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Resident</InputLabel>
+                    <Select
+                      name="resident_id"
+                      value={formData.resident_id}
+                      onChange={handleInputChange}
+                      disabled={dialogType === 'edit'}
+                    >
+                      {residents
+                        .filter(r => !formData.plot_id || r.plot_id == formData.plot_id)
+                        .map((resident) => (
+                          <MenuItem key={resident.resident_id} value={resident.resident_id}>
+                            {resident.name}
+                          </MenuItem>
+                        ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+
+                {dialogType === 'add' && (
+                  <>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Amount"
+                        name="amount"
+                        type="number"
+                        value={formData.amount}
+                        onChange={handleInputChange}
+                        InputProps={{ startAdornment: '₹' }}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
+                      <FormControl fullWidth>
+                        <InputLabel>Payment Type</InputLabel>
+                        <Select
+                          name="payment_type"
+                          value={formData.payment_type}
+                          onChange={handleInputChange}
+                        >
+                          {paymentTypes.map((type) => (
+                            <MenuItem key={type} value={type}>
+                              {type}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Due Date"
+                        name="due_date"
+                        type="date"
+                        value={formData.due_date}
+                        onChange={handleInputChange}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </Grid>
+                  </>
+                )}
+
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Payment Method</InputLabel>
+                    <Select
+                      name="payment_method"
+                      value={formData.payment_method}
+                      onChange={handleInputChange}
+                    >
+                      {paymentMethods.map((method) => (
+                        <MenuItem key={method} value={method}>
+                          {method}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Status</InputLabel>
+                    <Select
+                      name="status"
+                      value={formData.status}
+                      onChange={handleInputChange}
+                    >
+                      {statusOptions.map((status) => (
+                        <MenuItem key={status.value} value={status.value}>
+                          {status.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Transaction ID"
+                    name="transaction_id"
+                    value={formData.transaction_id}
+                    onChange={handleInputChange}
+                  />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Notes"
+                    name="notes"
+                    multiline
+                    rows={3}
+                    value={formData.notes}
+                    onChange={handleInputChange}
+                  />
+                </Grid>
+              </>
+            )}
+
+            {dialogType === 'view' && selectedPayment && (
+              <Grid item xs={12}>
+                <Box sx={{ p: 2 }}>
+                  <Typography variant="h6" gutterBottom>Payment Information</Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                      <Typography variant="body2" color="textSecondary">Payment ID:</Typography>
+                      <Typography variant="body1">#{selectedPayment.payment_id}</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="body2" color="textSecondary">Amount:</Typography>
+                      <Typography variant="body1">{formatCurrency(selectedPayment.amount)}</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="body2" color="textSecondary">Payment Type:</Typography>
+                      <Typography variant="body1">{selectedPayment.payment_type}</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="body2" color="textSecondary">Status:</Typography>
+                      <Box sx={{ mt: 0.5 }}>{getStatusChip(selectedPayment.status)}</Box>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="body2" color="textSecondary">Due Date:</Typography>
+                      <Typography variant="body1">{formatDate(selectedPayment.due_date)}</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="body2" color="textSecondary">Payment Method:</Typography>
+                      <Typography variant="body1">{selectedPayment.payment_method || 'N/A'}</Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="body2" color="textSecondary">Transaction ID:</Typography>
+                      <Typography variant="body1">{selectedPayment.transaction_id || 'N/A'}</Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="body2" color="textSecondary">Notes:</Typography>
+                      <Typography variant="body1">{selectedPayment.notes || 'No notes'}</Typography>
+                    </Grid>
+                  </Grid>
+                </Box>
+              </Grid>
+            )}
+          </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained">
-            {editingPayment ? 'Update' : 'Add'}
+          <Button onClick={handleCloseDialog}>
+            {dialogType === 'view' ? 'Close' : 'Cancel'}
           </Button>
+          {dialogType !== 'view' && (
+            <Button 
+              variant="contained" 
+              onClick={handleSubmit}
+              disabled={loading}
+            >
+              {loading ? <CircularProgress size={20} /> : (dialogType === 'add' ? 'Add Payment' : 'Update Payment')}
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
     </Box>
