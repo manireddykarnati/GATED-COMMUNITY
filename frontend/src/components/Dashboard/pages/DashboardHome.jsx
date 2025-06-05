@@ -44,19 +44,19 @@ const DashboardHome = () => {
       title: "My Plot Info",
       description: "Check your flat/plot number, size, block, and ownership details.",
       icon: <HomeWork fontSize="large" />,
-      route: "/plot-info",
+      route: "/dashboard/plot-info",
     },
     {
       title: "Community Notifications",
       description: "Stay updated with announcements and emergency alerts.",
       icon: <NotificationsActive fontSize="large" />,
-      route: "/notifications",
+      route: "/dashboard/notifications",
     },
     {
       title: "Payment Status",
       description: "Track your maintenance and utility bills with status updates.",
       icon: <Payment fontSize="large" />,
-      route: "/payment-history",
+      route: "/dashboard/payment-history",
     },
     {
       title: "Events & Bookings",
