@@ -1,71 +1,116 @@
+// src/components/admin/ReportsAnalytics.jsx
 import React, { useEffect, useState } from 'react';
+import {
+    Typography, Table, TableHead, TableBody, TableRow, TableCell, Paper
+} from '@mui/material';
 import axios from 'axios';
+import PageWrapper from './PageWrapper';
 
 const ReportsAnalytics = () => {
     const org_id = 1;
     const [paymentSummary, setPaymentSummary] = useState([]);
-    const [residentStats, setResidentStats] = useState([]);
+    const [residentCount, setResidentCount] = useState([]);
     const [overduePayments, setOverduePayments] = useState([]);
 
     useEffect(() => {
-        axios.get(`/api/admin/reports/payment-summary/${org_id}`).then(res => setPaymentSummary(res.data));
-        axios.get(`/api/admin/reports/resident-count/${org_id}`).then(res => setResidentStats(res.data));
-        axios.get(`/api/admin/reports/overdue-payments/${org_id}`).then(res => setOverduePayments(res.data));
+        fetchReports();
     }, []);
 
+    const fetchReports = async () => {
+        try {
+            const [summaryRes, countRes, overdueRes] = await Promise.all([
+                axios.get(`/api/admin/reports/payment-summary/${org_id}`),
+                axios.get(`/api/admin/reports/resident-count/${org_id}`),
+                axios.get(`/api/admin/reports/overdue-payments/${org_id}`)
+            ]);
+
+            setPaymentSummary(summaryRes.data);
+            setResidentCount(countRes.data);
+            setOverduePayments(overdueRes.data);
+        } catch (err) {
+            console.error('Error fetching reports:', err);
+        }
+    };
+
     return (
-        <div>
-            <h3>Reports & Analytics</h3>
+        <PageWrapper>
+            <Typography variant="h5" gutterBottom>
+                Reports & Analytics
+            </Typography>
 
-            <section>
-                <h4>Payment Summary</h4>
-                <ul>
-                    {paymentSummary.map((item, i) => (
-                        <li key={i}>
-                            Status: <strong>{item.status}</strong> — Count: {item.count} — Total ₹{item.total}
-                        </li>
-                    ))}
-                </ul>
-            </section>
+            {/* Payment Summary */}
+            <Paper sx={{ p: 2, mb: 4 }}>
+                <Typography variant="h6" gutterBottom>Payment Summary</Typography>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>Status</TableCell>
+                            <TableCell align="right">Count</TableCell>
+                            <TableCell align="right">Total Amount (₹)</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {paymentSummary.map((row) => (
+                            <TableRow key={row.status}>
+                                <TableCell>{row.status}</TableCell>
+                                <TableCell align="right">{row.count}</TableCell>
+                                <TableCell align="right">{parseFloat(row.total).toFixed(2)}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </Paper>
 
-            <section>
-                <h4>Resident Count by Street</h4>
-                <ul>
-                    {residentStats.map((s, i) => (
-                        <li key={i}>{s.street_name}: {s.resident_count} residents</li>
-                    ))}
-                </ul>
-            </section>
+            {/* Resident Count */}
+            <Paper sx={{ p: 2, mb: 4 }}>
+                <Typography variant="h6" gutterBottom>Residents by Street</Typography>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>Street</TableCell>
+                            <TableCell align="right">No. of Residents</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {residentCount.map((row) => (
+                            <TableRow key={row.street_name}>
+                                <TableCell>{row.street_name}</TableCell>
+                                <TableCell align="right">{row.resident_count}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </Paper>
 
-            <section>
-                <h4>Overdue Payments</h4>
-                {overduePayments.length === 0 && <p>No overdue payments 🎉</p>}
-                {overduePayments.length > 0 && (
-                    <table border="1" cellPadding="5">
-                        <thead>
-                            <tr>
-                                <th>Resident</th>
-                                <th>Plot</th>
-                                <th>Flat</th>
-                                <th>Amount</th>
-                                <th>Due Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {overduePayments.map(p => (
-                                <tr key={p.payment_id}>
-                                    <td>{p.resident_name}</td>
-                                    <td>{p.plot_no}</td>
-                                    <td>{p.flat_no || '-'}</td>
-                                    <td>₹{p.amount}</td>
-                                    <td>{p.due_date?.slice(0, 10)}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                )}
-            </section>
-        </div>
+            {/* Overdue Payments */}
+            <Paper sx={{ p: 2 }}>
+                <Typography variant="h6" gutterBottom>Overdue Payments</Typography>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>Resident</TableCell>
+                            <TableCell>Plot</TableCell>
+                            <TableCell>Flat</TableCell>
+                            <TableCell>Amount</TableCell>
+                            <TableCell>Due Date</TableCell>
+                            <TableCell>Status</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {overduePayments.map((p) => (
+                            <TableRow key={p.payment_id}>
+                                <TableCell>{p.resident_name}</TableCell>
+                                <TableCell>{p.plot_no}</TableCell>
+                                <TableCell>{p.flat_no || '-'}</TableCell>
+                                <TableCell>₹{parseFloat(p.amount).toFixed(2)}</TableCell>
+                                <TableCell>{p.due_date}</TableCell>
+                                <TableCell>{p.status}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </Paper>
+        </PageWrapper>
     );
 };
 

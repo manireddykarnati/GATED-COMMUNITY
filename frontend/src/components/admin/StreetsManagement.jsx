@@ -1,50 +1,28 @@
-import React, { useState, useEffect } from 'react';
+// src/components/admin/StreetsManagement.jsx
+import React, { useEffect, useState } from 'react';
+import {
+  Typography, Box, Button, Table, TableHead, TableBody,
+  TableRow, TableCell, Dialog, DialogTitle, DialogContent,
+  DialogActions, TextField, IconButton, Paper
+} from '@mui/material';
+import { Edit, Delete, Add } from '@mui/icons-material';
 import axios from 'axios';
+import PageWrapper from './PageWrapper';
 
 const StreetsManagement = () => {
-  const org_id = 1; // Set your org ID dynamically later
+  const org_id = 1; // or fetch from user context
   const [streets, setStreets] = useState([]);
-  const [newStreet, setNewStreet] = useState('');
-  const [editing, setEditing] = useState(null);
-  const [editName, setEditName] = useState('');
+  const [open, setOpen] = useState(false);
+  const [editStreet, setEditStreet] = useState(null);
+  const [streetName, setStreetName] = useState('');
 
+  // Fetch streets
   const fetchStreets = async () => {
     try {
       const res = await axios.get(`/api/admin/streets/${org_id}`);
       setStreets(res.data);
     } catch (err) {
-      console.error('Failed to load streets', err);
-    }
-  };
-
-  const addStreet = async () => {
-    if (!newStreet.trim()) return;
-    try {
-      await axios.post('/api/admin/streets', { org_id, street_name: newStreet });
-      setNewStreet('');
-      fetchStreets();
-    } catch (err) {
-      console.error('Failed to add street', err);
-    }
-  };
-
-  const updateStreet = async (id) => {
-    try {
-      await axios.put(`/api/admin/streets/${id}`, { street_name: editName });
-      setEditing(null);
-      setEditName('');
-      fetchStreets();
-    } catch (err) {
-      console.error('Failed to update street', err);
-    }
-  };
-
-  const deleteStreet = async (id) => {
-    try {
-      await axios.delete(`/api/admin/streets/${id}`);
-      fetchStreets();
-    } catch (err) {
-      console.error('Failed to delete street', err);
+      console.error('Error fetching streets:', err);
     }
   };
 
@@ -52,45 +30,92 @@ const StreetsManagement = () => {
     fetchStreets();
   }, []);
 
+  // Add or update street
+  const handleSave = async () => {
+    try {
+      if (editStreet) {
+        await axios.put(`/api/admin/streets/${editStreet.street_id}`, { street_name: streetName });
+      } else {
+        await axios.post('/api/admin/streets', { org_id, street_name: streetName });
+      }
+      fetchStreets();
+      setOpen(false);
+      setStreetName('');
+      setEditStreet(null);
+    } catch (err) {
+      console.error('Error saving street:', err);
+    }
+  };
+
+  const handleEdit = (street) => {
+    setEditStreet(street);
+    setStreetName(street.street_name);
+    setOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this street?')) return;
+    try {
+      await axios.delete(`/api/admin/streets/${id}`);
+      fetchStreets();
+    } catch (err) {
+      console.error('Error deleting street:', err);
+    }
+  };
+
   return (
-    <div>
-      <h3>Manage Streets</h3>
+    <PageWrapper>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h5">Manage Streets</Typography>
+        <Button variant="contained" startIcon={<Add />} onClick={() => setOpen(true)}>
+          Add Street
+        </Button>
+      </Box>
 
-      <div>
-        <input
-          value={newStreet}
-          onChange={(e) => setNewStreet(e.target.value)}
-          placeholder="Enter street name"
-        />
-        <button onClick={addStreet}>Add Street</button>
-      </div>
+      <Paper>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>#</TableCell>
+              <TableCell>Street Name</TableCell>
+              <TableCell align="right">Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {streets.map((street, index) => (
+              <TableRow key={street.street_id}>
+                <TableCell>{index + 1}</TableCell>
+                <TableCell>{street.street_name}</TableCell>
+                <TableCell align="right">
+                  <IconButton onClick={() => handleEdit(street)}><Edit /></IconButton>
+                  <IconButton onClick={() => handleDelete(street.street_id)}><Delete /></IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Paper>
 
-      <ul>
-        {streets.map((street) => (
-          <li key={street.street_id}>
-            {editing === street.street_id ? (
-              <>
-                <input
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                />
-                <button onClick={() => updateStreet(street.street_id)}>Save</button>
-                <button onClick={() => setEditing(null)}>Cancel</button>
-              </>
-            ) : (
-              <>
-                {street.street_name}
-                <button onClick={() => {
-                  setEditing(street.street_id);
-                  setEditName(street.street_name);
-                }}>Edit</button>
-                <button onClick={() => deleteStreet(street.street_id)}>Delete</button>
-              </>
-            )}
-          </li>
-        ))}
-      </ul>
-    </div>
+      <Dialog open={open} onClose={() => setOpen(false)}>
+        <DialogTitle>{editStreet ? 'Edit Street' : 'Add Street'}</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Street Name"
+            fullWidth
+            value={streetName}
+            onChange={(e) => setStreetName(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleSave}>
+            {editStreet ? 'Update' : 'Add'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </PageWrapper>
   );
 };
 
