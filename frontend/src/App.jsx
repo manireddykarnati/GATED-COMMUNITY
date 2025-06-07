@@ -5,7 +5,7 @@ import HomePage from './components/HomePage';
 import Login from "./components/Login";
 import Register from "./components/RegistrationPage";
 import Dashboard from "./components/Dashboard/Dashboard";
-import AdminDashboard from "./components 2/AdminDashboard"; // We'll fix this path later
+import AdminDashboard from "./components/AdminDashboard"; // We'll fix this path later
 
 function App() {
   return (
@@ -14,7 +14,8 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/dashboard/*" element={<Dashboard />} />
-      <Route path="/admin-dashboard" element={<AdminDashboard />} />
+      <Route path="/admin-dashboard/*" element={<AdminDashboard />} />
+
     </Routes>
   );
 }
