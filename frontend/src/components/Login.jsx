@@ -25,24 +25,24 @@ function Login() {
     e.preventDefault();
     setIsLoading(true);
     setMessage('');
-    
+
     try {
-      const res = await axios.post('http://localhost:5001/api/login', { 
-        user_name, 
-        password 
+      const res = await axios.post('http://localhost:5001/api/login', {
+        user_name,
+        password
       });
-      
+
       console.log("Login Response:", res.data);
-      
+
       if (res.data.success) {
         const userData = res.data.user;
-        
+
         // Store user data in sessionStorage for access across components
         sessionStorage.setItem('userData', JSON.stringify(userData));
-        
+
         // Set success message
         setMessage(res.data.welcomeMessage || 'Login successful!');
-        
+
         // Small delay for better UX and to show success message
         setTimeout(() => {
           // Redirect based on user type
@@ -89,7 +89,7 @@ function Login() {
       <div className="login-box">
         <h2>Welcome Back</h2>
         <p className="welcome-subtitle">Sign in to access your community portal</p>
-        
+
         <form onSubmit={handleSubmit}>
           <div className="input-group">
             <label htmlFor="username">Username</label>
@@ -108,7 +108,7 @@ function Login() {
               <span className="input-validation" role="img" aria-label="Valid">✓</span>
             )}
           </div>
-          
+
           <div className="input-group">
             <label htmlFor="password">Password</label>
             <input
@@ -126,9 +126,9 @@ function Login() {
               <span className="input-validation" role="img" aria-label="Valid">✓</span>
             )}
           </div>
-          
-          <button 
-            type="submit" 
+
+          <button
+            type="submit"
             disabled={isLoading || !isUsernameValid || !isPasswordValid}
             className={isLoading ? 'loading' : ''}
             aria-describedby="submit-help"
@@ -136,33 +136,32 @@ function Login() {
             {isLoading ? 'Authenticating...' : 'Sign In'}
           </button>
         </form>
-        
+
         {message && (
-          <div 
-            className={`message ${
-              message.includes('success') || 
-              message.includes('Welcome') || 
-              message.toLowerCase().includes('login successful') ||
-              message.includes('successful')
-                ? 'success' 
+          <div
+            className={`message ${message.includes('success') ||
+                message.includes('Welcome') ||
+                message.toLowerCase().includes('login successful') ||
+                message.includes('successful')
+                ? 'success'
                 : 'error'
-            }`}
+              }`}
             role="alert"
             aria-live="polite"
           >
             {message}
           </div>
         )}
-        
+
         <p className="register-footer">
           Don&apos;t have an account? <a href="/register">Create one here</a>
         </p>
-        
+
         {/* Security Badge */}
         <div className="security-badge" title="Secure Login">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            <path d="M9 12l2 2 4-4"/>
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            <path d="M9 12l2 2 4-4" />
           </svg>
         </div>
       </div>

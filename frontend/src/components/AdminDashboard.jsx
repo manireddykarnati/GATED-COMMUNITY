@@ -12,6 +12,8 @@ const AdminDashboard = () => {
     return (
         <Routes>
             <Route path="/" element={<AdminLayout />}>
+                {/* ✅ Default landing route */}
+                <Route index element={<StreetsManagement />} />
                 <Route path="streets" element={<StreetsManagement />} />
                 <Route path="plots" element={<PlotsManagement />} />
                 <Route path="residents" element={<ResidentsManagement />} />

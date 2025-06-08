@@ -8,37 +8,32 @@ const HomePage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    setIsLoaded(true);
+    // Trigger loading animation
+    setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
   }, []);
 
-  const loginOptions = [
+  const actionOptions = [
     {
-      id: 'admin',
-      title: 'Admin Login',
-      description: 'Manage community operations, resident data, and system settings',
-      icon: '🛡️',
-      color: 'admin',
+      id: 'login',
+      title: 'Login',
+      description: 'Access your account to manage properties, requests, and community updates',
+      icon: '🔐',
+      color: 'login',
       route: '/login'
     },
     {
-      id: 'owner',
-      title: 'Owner Login',
-      description: 'Access property management, maintenance requests, and community updates',
-      icon: '🏠',
-      color: 'owner',
-      route: '/login'
-    },
-    {
-      id: 'tenant',
-      title: 'Tenant Login',
-      description: 'Submit requests, view announcements, and manage your tenancy',
-      icon: '🔑',
-      color: 'tenant',
-      route: '/login'
+      id: 'register',
+      title: 'Register as Tenant',
+      description: 'Create your account to join the community and access tenant services',
+      icon: '👤',
+      color: 'register',
+      route: '/register'
     }
   ];
 
-  const handleLogin = (route) => {
+  const handleAction = (route) => {
     navigate(route);
   };
 
@@ -60,7 +55,7 @@ const HomePage = () => {
           <div className="header-container">
             <div className="logo-section">
               <div className="logo-wrapper">
-                <div className="logo-icon">🏢</div>
+                <div className="logo-icon">🏠</div>
                 <div className="logo-sparkle">✨</div>
               </div>
               <div className="brand-info">
@@ -85,19 +80,19 @@ const HomePage = () => {
               </p>
             </div>
 
-            {/* Login options */}
-            <div className="login-options">
-              {loginOptions.map((option, index) => {
+            {/* Action options */}
+            <div className="action-options">
+              {actionOptions.map((option, index) => {
                 return (
                   <div
                     key={option.id}
-                    className={`login-card ${isLoaded ? 'animate-in' : ''} delay-${(index + 1) * 200} ${hoveredCard === option.id ? 'hovered' : ''}`}
+                    className={`action-card ${isLoaded ? 'animate-in' : ''} delay-${(index + 1) * 200} ${hoveredCard === option.id ? 'hovered' : ''}`}
                   >
                     <div
                       className={`card-content ${option.color}-card`}
                       onMouseEnter={() => setHoveredCard(option.id)}
                       onMouseLeave={() => setHoveredCard(null)}
-                      onClick={() => handleLogin(option.route)}
+                      onClick={() => handleAction(option.route)}
                     >
                       {/* Icon */}
                       <div className={`card-icon ${option.color}-icon`}>
@@ -108,10 +103,10 @@ const HomePage = () => {
                       <div className="card-info">
                         <h3 className="card-title">{option.title}</h3>
                         <p className="card-description">{option.description}</p>
-                        
+
                         {/* Action button */}
                         <div className="card-action">
-                          <span>Access Portal</span>
+                          <span>{option.id === 'login' ? 'Access Portal' : 'Get Started'}</span>
                           <div className="action-arrow">→</div>
                         </div>
                       </div>

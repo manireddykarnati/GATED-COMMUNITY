@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import {
     AppBar, Toolbar, Typography, CssBaseline, Drawer, List, ListItem, ListItemIcon,
-    ListItemText, Box, IconButton, Switch, useTheme
+    ListItemText, Box, IconButton
 } from '@mui/material';
 import {
     Dashboard as DashboardIcon,
