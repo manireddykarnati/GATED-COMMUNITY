@@ -5,17 +5,12 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { BrowserRouter } from 'react-router-dom';
 
-// ✅ Import your DarkModeProvider
-import { DarkModeProvider } from './components/Dashboard/context/DarkModeContext';
-
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
 root.render(
   <React.StrictMode>
     <BrowserRouter>
-      <DarkModeProvider>
-        <App />
-      </DarkModeProvider>
+      <App />
     </BrowserRouter>
   </React.StrictMode>
 );
