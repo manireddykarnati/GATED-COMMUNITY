@@ -186,18 +186,26 @@ router.delete('/flats/:id', async (req, res) => {
   }
 });
 
-// ========== RESIDENTS CRUD ==========
+// ========== RESIDENTS CRUD (UPDATED WITH LOGIN MANAGEMENT) ==========
 
-// Get all residents for an org
+// Get all residents for an org with login status
 router.get('/residents/:org_id', async (req, res) => {
   const { org_id } = req.params;
   try {
     const result = await pool.query(
-      `SELECT r.*, p.plot_no, f.flat_no 
+      `SELECT 
+        r.*, 
+        p.plot_no, 
+        f.flat_no,
+        ul.user_name,
+        ul.user_type,
+        CASE WHEN ul.user_id IS NOT NULL THEN true ELSE false END as has_login
        FROM residents r
        LEFT JOIN plots p ON r.plot_id = p.plot_id
        LEFT JOIN flats f ON r.flat_id = f.flat_id
-       WHERE p.org_id = $1`,
+       LEFT JOIN users_login ul ON r.resident_id = ul.resident_id
+       WHERE p.org_id = $1
+       ORDER BY r.name`,
       [org_id]
     );
     res.json(result.rows);
@@ -207,49 +215,184 @@ router.get('/residents/:org_id', async (req, res) => {
   }
 });
 
-// Add resident
+// Add resident with optional login creation
 router.post('/residents', async (req, res) => {
-  const { plot_id, flat_id, name, contact_number, email, id_proof } = req.body;
+  const {
+    plot_id, flat_id, name, contact_number, email, id_proof,
+    create_login, user_name, password, user_type
+  } = req.body;
+
+  const client = await pool.connect();
+
   try {
-    const result = await pool.query(
+    await client.query('BEGIN');
+
+    // Insert resident
+    const residentResult = await client.query(
       `INSERT INTO residents (plot_id, flat_id, name, contact_number, email, id_proof)
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
       [plot_id, flat_id || null, name, contact_number, email, id_proof]
     );
-    res.status(201).json(result.rows[0]);
+
+    const resident = residentResult.rows[0];
+
+    // Create login if requested
+    if (create_login && user_name && password) {
+      // Check if username already exists
+      const userCheck = await client.query(
+        'SELECT user_id FROM users_login WHERE user_name = $1',
+        [user_name]
+      );
+
+      if (userCheck.rows.length > 0) {
+        throw new Error('Username already exists');
+      }
+
+      // Get org_id from plot
+      const plotResult = await client.query(
+        'SELECT org_id FROM plots WHERE plot_id = $1',
+        [plot_id]
+      );
+
+      const org_id = plotResult.rows[0].org_id;
+
+      await client.query(
+        `INSERT INTO users_login (user_name, password, org_id, plot_id, resident_id, user_type)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [user_name, password, org_id, plot_id, resident.resident_id, user_type || 'owner']
+      );
+    }
+
+    await client.query('COMMIT');
+    res.status(201).json(resident);
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error('Add resident error:', err);
-    res.status(500).json({ message: 'Failed to add resident' });
+    res.status(500).json({ message: err.message || 'Failed to add resident' });
+  } finally {
+    client.release();
   }
 });
 
-// Update resident
+// Update resident with optional login creation
 router.put('/residents/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, contact_number, email, id_proof } = req.body;
+  const {
+    name, contact_number, email, id_proof,
+    create_login, user_name, password, user_type
+  } = req.body;
+
+  const client = await pool.connect();
+
   try {
-    const result = await pool.query(
+    await client.query('BEGIN');
+
+    // Update resident basic info
+    const residentResult = await client.query(
       `UPDATE residents
        SET name = $1, contact_number = $2, email = $3, id_proof = $4
        WHERE resident_id = $5 RETURNING *`,
       [name, contact_number, email, id_proof, id]
     );
-    res.json(result.rows[0]);
+
+    const resident = residentResult.rows[0];
+
+    // Create login if requested and doesn't exist
+    if (create_login && user_name && password) {
+      // Check if resident already has login
+      const existingLogin = await client.query(
+        'SELECT user_id FROM users_login WHERE resident_id = $1',
+        [id]
+      );
+
+      if (existingLogin.rows.length === 0) {
+        // Check if username is available
+        const userCheck = await client.query(
+          'SELECT user_id FROM users_login WHERE user_name = $1',
+          [user_name]
+        );
+
+        if (userCheck.rows.length > 0) {
+          throw new Error('Username already exists');
+        }
+
+        // Get org_id from resident's plot
+        const plotResult = await client.query(
+          'SELECT org_id FROM plots WHERE plot_id = $1',
+          [resident.plot_id]
+        );
+
+        const org_id = plotResult.rows[0].org_id;
+
+        await client.query(
+          `INSERT INTO users_login (user_name, password, org_id, plot_id, resident_id, user_type)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [user_name, password, org_id, resident.plot_id, id, user_type || 'owner']
+        );
+      }
+    }
+
+    await client.query('COMMIT');
+    res.json(resident);
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error('Update resident error:', err);
-    res.status(500).json({ message: 'Failed to update resident' });
+    res.status(500).json({ message: err.message || 'Failed to update resident' });
+  } finally {
+    client.release();
   }
 });
 
-// Delete resident
+// Reset resident password
+router.put('/residents/:id/reset-password', async (req, res) => {
+  const { id } = req.params;
+  const { password } = req.body;
+
+  try {
+    const result = await pool.query(
+      `UPDATE users_login 
+       SET password = $1, last_login = NULL
+       WHERE resident_id = $2 RETURNING user_name`,
+      [password, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'No login account found for this resident' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Password updated successfully',
+      user_name: result.rows[0].user_name
+    });
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).json({ message: 'Failed to reset password' });
+  }
+});
+
+// Delete resident (and associated login)
 router.delete('/residents/:id', async (req, res) => {
   const { id } = req.params;
+  const client = await pool.connect();
+
   try {
-    await pool.query('DELETE FROM residents WHERE resident_id = $1', [id]);
+    await client.query('BEGIN');
+
+    // Delete associated login first
+    await client.query('DELETE FROM users_login WHERE resident_id = $1', [id]);
+
+    // Delete resident
+    await client.query('DELETE FROM residents WHERE resident_id = $1', [id]);
+
+    await client.query('COMMIT');
     res.json({ success: true });
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error('Delete resident error:', err);
     res.status(500).json({ message: 'Failed to delete resident' });
+  } finally {
+    client.release();
   }
 });
 
@@ -310,6 +453,7 @@ router.delete('/payments/:id', async (req, res) => {
   }
 });
 
+// ========== REPORTS ==========
 
 router.get('/reports/payment-summary/:org_id', async (req, res) => {
   const { org_id } = req.params;
@@ -327,7 +471,6 @@ router.get('/reports/payment-summary/:org_id', async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch summary' });
   }
 });
-
 
 router.get('/reports/resident-count/:org_id', async (req, res) => {
   const { org_id } = req.params;
@@ -366,6 +509,44 @@ router.get('/reports/overdue-payments/:org_id', async (req, res) => {
   }
 });
 
+// ========== SEND NOTIFICATIONS ==========
+router.post('/notifications', async (req, res) => {
+  const { sender_id, recipient_type, recipient_id, title, message, priority } = req.body;
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO notifications (
+        sender_id, recipient_type, recipient_id,
+        title, message, priority
+      ) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [sender_id, recipient_type, recipient_id, title, message, priority || 'normal']
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error sending notification:', err);
+    res.status(500).json({ message: 'Failed to send notification' });
+  }
+});
+// ========== MAINTENANCE REQUESTS ==========
+
+// Raise new maintenance request
+router.post('/maintenance', async (req, res) => {
+  const { plot_id, resident_id, title, description, category, priority } = req.body;
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO maintenance_requests 
+        (plot_id, resident_id, title, description, category, priority, status, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, 'Pending', NOW())
+       RETURNING *`,
+      [plot_id, resident_id, title, description, category, priority]
+    );
+    res.status(201).json({ success: true, request: result.rows[0] });
+  } catch (err) {
+    console.error("Error submitting maintenance request:", err);
+    res.status(500).json({ success: false, message: "Failed to submit request" });
+  }
+});
 
 
 module.exports = router;

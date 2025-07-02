@@ -1,131 +1,379 @@
-import React, { useState } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+// components/admin/AdminLayout.jsx - FIXED NAVIGATION
+import React, { useState, useEffect } from 'react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     AppBar, Toolbar, Typography, CssBaseline, Drawer, List, ListItem, ListItemIcon,
-    ListItemText, Box, IconButton
+    ListItemText, Box, IconButton, Avatar, Chip, Divider, Tooltip
 } from '@mui/material';
 import {
-    Dashboard as DashboardIcon,
-    Home as HomeIcon,
     People as PeopleIcon,
     Payments as PaymentsIcon,
     Assessment as AssessmentIcon,
     Menu as MenuIcon,
-    LightMode, DarkMode
+    LightMode, DarkMode,
+    LocationCity as LocationCityIcon,
+    HomeWork as HomeWorkIcon,
+    Notifications as NotificationsIcon,
+    Logout as LogoutIcon,
+    Settings as SettingsIcon,
+    Search as SearchIcon,
+    Dashboard as DashboardIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import './AdminLayout.css';
 
-const drawerWidth = 240;
+const drawerWidth = 280;
 
 const navItems = [
-    { label: 'Manage Streets', icon: <HomeIcon />, path: 'streets' },
-    { label: 'Manage Plots', icon: <DashboardIcon />, path: 'plots' },
-    { label: 'Manage Residents', icon: <PeopleIcon />, path: 'residents' },
-    { label: 'Manage Payments', icon: <PaymentsIcon />, path: 'payments' },
-    { label: 'Reports & Analytics', icon: <AssessmentIcon />, path: 'reports' },
+    {
+        label: 'Dashboard',
+        icon: <DashboardIcon />,
+        path: '/admin-dashboard',
+        description: 'Overview and summary',
+        color: '#6366f1'
+    },
+    {
+        label: 'Streets Management',
+        icon: <LocationCityIcon />,
+        path: '/admin-dashboard/streets',
+        description: 'Manage community streets',
+        color: '#3b82f6'
+    },
+    {
+        label: 'Plots Management',
+        icon: <HomeWorkIcon />,
+        path: '/admin-dashboard/plots',
+        description: 'Oversee plot assignments',
+        color: '#10b981'
+    },
+    {
+        label: 'Residents Management',
+        icon: <PeopleIcon />,
+        path: '/admin-dashboard/residents',
+        description: 'Manage resident profiles',
+        color: '#8b5cf6'
+    },
+    {
+        label: 'Payments Management',
+        icon: <PaymentsIcon />,
+        path: '/admin-dashboard/payments',
+        description: 'Handle payment processing',
+        color: '#f59e0b'
+    },
+    {
+        label: 'Reports & Analytics',
+        icon: <AssessmentIcon />,
+        path: '/admin-dashboard/reports',
+        description: 'View detailed analytics',
+        color: '#ef4444'
+    },
+    {
+        label: 'Send Notifications',
+        icon: <NotificationsIcon />,
+        path: '/admin-dashboard/send-notifications',
+        description: 'Broadcast announcements',
+        color: '#06b6d4'
+    },
 ];
 
 const AdminLayout = () => {
     const location = useLocation();
-    const [darkMode, setDarkMode] = useState(false);
+    const navigate = useNavigate();
+    const [darkMode, setDarkMode] = useState(true);
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    useEffect(() => {
+        setIsLoaded(true);
+    }, []);
 
     const handleThemeToggle = () => setDarkMode(!darkMode);
     const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
 
+    const handleLogout = () => {
+        // Add smooth logout animation
+        document.body.style.transition = 'opacity 0.3s ease';
+        document.body.style.opacity = '0.8';
+
+        setTimeout(() => {
+            sessionStorage.clear();
+            localStorage.clear();
+            navigate('/');
+            document.body.style.opacity = '1';
+        }, 300);
+    };
+
+    const getActiveItem = () => {
+        return navItems.find(item => item.path === location.pathname);
+    };
+
+    const activeItem = getActiveItem();
+
     const drawer = (
-        <Box sx={{ bgcolor: darkMode ? 'grey.900' : 'grey.100', height: '100%' }}>
-            <Toolbar>
-                <Typography variant="h6">GCMS Admin</Typography>
-            </Toolbar>
-            <List>
-                {navItems.map(({ label, icon, path }) => (
-                    <ListItem
-                        button
-                        key={label}
-                        component={Link}
-                        to={path}
-                        selected={location.pathname.includes(path)}
-                        sx={{
-                            '&:hover': {
-                                bgcolor: darkMode ? 'grey.800' : 'grey.200',
-                                transition: 'all 0.3s ease'
-                            }
-                        }}
-                    >
-                        <ListItemIcon>{icon}</ListItemIcon>
-                        <ListItemText primary={label} />
-                    </ListItem>
-                ))}
+        <Box className={`admin-sidebar ${darkMode ? 'dark' : 'light'}`}>
+            {/* Sidebar Header */}
+            <motion.div
+                className="sidebar-header"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+            >
+                <div className="logo-section">
+                    <div className="logo-wrapper">
+                        <div className="logo-icon">
+                            <span className="logo-emoji">🏠</span>
+                            <div className="logo-glow"></div>
+                        </div>
+                        <div className="logo-sparkle">✨</div>
+                    </div>
+                    <div className="brand-info">
+                        <Typography variant="h6" className="brand-title">
+                            GCMS Admin
+                        </Typography>
+                        <Typography variant="caption" className="brand-subtitle">
+                            Management Portal
+                        </Typography>
+                    </div>
+                </div>
+            </motion.div>
+
+            <Divider className="header-divider" />
+
+            {/* Admin Profile Section */}
+            <motion.div
+                className="admin-profile"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+            >
+                <Avatar className="admin-avatar" sx={{ width: 48, height: 48 }}>
+                    A
+                </Avatar>
+                <div className="admin-info">
+                    <Typography variant="subtitle1" className="admin-name">
+                        Admin User
+                    </Typography>
+                    <Chip
+                        label="Administrator"
+                        size="small"
+                        className="admin-role-chip"
+                    />
+                </div>
+            </motion.div>
+
+            <Divider className="profile-divider" />
+
+            {/* Navigation Items */}
+            <List className="nav-list" disablePadding>
+                {navItems.map((item) => {
+                    const isActive = location.pathname === item.path;
+
+                    return (
+                        <div key={item.label} className="nav-item-wrapper">
+                            <Tooltip title={item.description} placement="right" arrow>
+                                <ListItem
+                                    button
+                                    component={Link}
+                                    to={item.path}
+                                    className={`nav-item ${isActive ? 'active' : ''}`}
+                                    disablePadding
+                                >
+                                    <ListItemIcon className="nav-icon">
+                                        <div className="icon-wrapper">
+                                            {item.icon}
+                                            <div className="icon-glow"></div>
+                                        </div>
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary={item.label}
+                                        className="nav-text"
+                                        primaryTypographyProps={{
+                                            fontSize: '0.9rem',
+                                            fontWeight: isActive ? 600 : 500
+                                        }}
+                                    />
+                                    {isActive && (
+                                        <div className="active-indicator" />
+                                    )}
+                                </ListItem>
+                            </Tooltip>
+                        </div>
+                    );
+                })}
             </List>
+
+            {/* Bottom Actions */}
+            <div className="sidebar-bottom">
+                <Divider className="bottom-divider" />
+                <motion.div
+                    className="bottom-actions"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.8 }}
+                >
+                    <Tooltip title="Settings" placement="right">
+                        <IconButton className="action-btn settings-btn">
+                            <SettingsIcon />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Logout" placement="right">
+                        <IconButton className="action-btn logout-btn" onClick={handleLogout}>
+                            <LogoutIcon />
+                        </IconButton>
+                    </Tooltip>
+                </motion.div>
+            </div>
         </Box>
     );
 
     return (
-        <Box sx={{ display: 'flex', bgcolor: darkMode ? 'grey.100' : '#fafafa' }}>
+        <div className={`admin-layout ${darkMode ? 'dark-theme' : 'light-theme'} ${isLoaded ? 'loaded' : ''}`}>
             <CssBaseline />
 
-            {/* AppBar */}
-            <AppBar
-                position="fixed"
-                sx={{
-                    width: { sm: `calc(100% - ${drawerWidth}px)` },
-                    ml: { sm: `${drawerWidth}px` },
-                    backgroundColor: darkMode ? '#212121' : '#1976d2',
-                }}
-            >
-                <Toolbar>
-                    <IconButton
-                        color="inherit"
-                        edge="start"
-                        onClick={handleDrawerToggle}
-                        sx={{ mr: 2, display: { sm: 'none' } }}
-                    >
-                        <MenuIcon />
-                    </IconButton>
-                    <Typography variant="h6" noWrap sx={{ flexGrow: 1 }}>
-                        Admin Dashboard
-                    </Typography>
-                    <IconButton onClick={handleThemeToggle} color="inherit">
-                        {darkMode ? <DarkMode /> : <LightMode />}
-                    </IconButton>
-                </Toolbar>
-            </AppBar>
+            {/* Background Effects */}
+            <div className="admin-bg-effects">
+                <div className="bg-shape bg-shape-1"></div>
+                <div className="bg-shape bg-shape-2"></div>
+                <div className="bg-shape bg-shape-3"></div>
+                <div className="bg-particles">
+                    {[...Array(15)].map((_, i) => (
+                        <div key={i} className={`particle particle-${i + 1}`}></div>
+                    ))}
+                </div>
+            </div>
 
-            {/* Drawer */}
-            <Drawer
-                variant="permanent"
-                sx={{
-                    display: { xs: 'none', sm: 'block' },
-                    '& .MuiDrawer-paper': {
-                        width: drawerWidth,
-                        boxSizing: 'border-box',
-                        backgroundColor: darkMode ? '#1e1e1e' : '#f5f5f5'
-                    },
-                }}
-                open
-            >
-                {drawer}
-            </Drawer>
-
-            {/* Page Content */}
+            {/* Desktop Sidebar */}
             <Box
-                component={motion.main}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
+                component="nav"
                 sx={{
-                    flexGrow: 1,
-                    p: 3,
-                    width: { sm: `calc(100% - ${drawerWidth}px)` },
-                    minHeight: '100vh',
-                    bgcolor: darkMode ? 'grey.900' : 'white'
+                    width: { sm: drawerWidth },
+                    flexShrink: { sm: 0 },
+                    display: { xs: 'none', sm: 'block' }
                 }}
             >
-                <Toolbar />
-                <Outlet />
+                <Drawer
+                    variant="permanent"
+                    sx={{
+                        '& .MuiDrawer-paper': {
+                            boxSizing: 'border-box',
+                            width: drawerWidth,
+                            border: 'none',
+                            position: 'fixed',
+                            height: '100vh'
+                        },
+                    }}
+                    open
+                >
+                    {drawer}
+                </Drawer>
             </Box>
-        </Box>
+
+            {/* Mobile Sidebar */}
+            <Box
+                component="nav"
+                sx={{
+                    width: { sm: drawerWidth },
+                    flexShrink: { sm: 0 },
+                    display: { xs: 'block', sm: 'none' }
+                }}
+            >
+                <Drawer
+                    variant="temporary"
+                    open={mobileOpen}
+                    onClose={handleDrawerToggle}
+                    ModalProps={{ keepMounted: true }}
+                    sx={{
+                        '& .MuiDrawer-paper': {
+                            boxSizing: 'border-box',
+                            width: drawerWidth,
+                            border: 'none',
+                        },
+                    }}
+                >
+                    {drawer}
+                </Drawer>
+            </Box>
+
+            {/* Top AppBar */}
+            <motion.div
+                initial={{ y: -100, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+            >
+                <AppBar
+                    position="fixed"
+                    className="admin-appbar"
+                >
+                    <Toolbar className="appbar-toolbar">
+                        <IconButton
+                            color="inherit"
+                            edge="start"
+                            onClick={handleDrawerToggle}
+                            className="mobile-menu-btn"
+                            sx={{ mr: 2, display: { sm: 'none' } }}
+                        >
+                            <MenuIcon />
+                        </IconButton>
+
+                        {/* Page Title with breadcrumb */}
+                        <div className="page-title-section">
+                            <Typography variant="h5" className="page-title">
+                                {activeItem?.label || 'Dashboard'}
+                            </Typography>
+                            <Typography variant="body2" className="page-subtitle">
+                                {activeItem?.description || 'Welcome to GCMS Admin'}
+                            </Typography>
+                        </div>
+
+                        <div className="appbar-actions">
+                            {/* Search */}
+                            <Tooltip title="Search" arrow>
+                                <IconButton className="action-icon search-btn">
+                                    <SearchIcon />
+                                </IconButton>
+                            </Tooltip>
+
+                            {/* Theme Toggle */}
+                            <Tooltip title={darkMode ? 'Light Mode' : 'Dark Mode'} arrow>
+                                <IconButton
+                                    onClick={handleThemeToggle}
+                                    className="action-icon theme-toggle"
+                                >
+                                    <motion.div
+                                        key={darkMode ? 'dark' : 'light'}
+                                        initial={{ rotate: -180, opacity: 0 }}
+                                        animate={{ rotate: 0, opacity: 1 }}
+                                        transition={{ duration: 0.3 }}
+                                    >
+                                        {darkMode ? <LightMode /> : <DarkMode />}
+                                    </motion.div>
+                                </IconButton>
+                            </Tooltip>
+
+                            {/* Notifications */}
+                            <Tooltip title="Notifications" arrow>
+                                <IconButton className="action-icon notifications-btn">
+                                    <NotificationsIcon />
+                                    <span className="notification-badge">3</span>
+                                </IconButton>
+                            </Tooltip>
+                        </div>
+                    </Toolbar>
+                </AppBar>
+            </motion.div>
+
+            {/* Main Content */}
+            <div className="admin-main-content">
+                <motion.div
+                    className="content-wrapper"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                >
+                    <Outlet />
+                </motion.div>
+            </div>
+        </div>
     );
 };
 

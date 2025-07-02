@@ -1,0 +1,79 @@
+.raise-request-container {
+    max-width: 500px;
+    margin: 40px auto;
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 30px 25px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.form-title {
+    margin-bottom: 20px;
+    font-size: 22px;
+    text-align: center;
+    color: #333;
+}
+
+.raise-request-form input,
+.raise-request-form textarea,
+.raise-request-form select {
+    width: 100%;
+    padding: 10px 12px;
+    margin: 8px 0 16px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 15px;
+    transition: border-color 0.3s ease;
+}
+
+.raise-request-form input:focus,
+.raise-request-form textarea:focus,
+.raise-request-form select:focus {
+    border-color: #4CAF50;
+    outline: none;
+}
+
+.raise-request-form label {
+    font-weight: 500;
+    margin-bottom: 6px;
+    display: block;
+    color: #444;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.submit-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.submit-btn:hover {
+    background-color: #45a049;
+}
+
+.cancel-btn {
+    background-color: #e74c3c;
+    color: white;
+    padding: 10px 20px;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.cancel-btn:hover {
+    background-color: #c0392b;
+}

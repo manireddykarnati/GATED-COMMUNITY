@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './HomePage.css';
 
@@ -6,7 +6,9 @@ const HomePage = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hoveredCard, setHoveredCard] = useState(null);
   const [currentFeature, setCurrentFeature] = useState(0);
-  const navigate = useNavigate();
+  const [scrollY, setScrollY] = useState(0);
+  const containerRef = useRef(null);
+  const navigate = useNavigate(); // Add navigate hook
 
   const features = [
     { icon: '🔒', text: 'Bank-Grade Security', color: 'blue' },
@@ -18,24 +20,92 @@ const HomePage = () => {
   ];
 
   useEffect(() => {
+    // AGGRESSIVE SCROLL FIX
+    const forceScrollEnable = () => {
+      // Reset all potential scroll blocking styles
+      document.documentElement.style.height = 'auto';
+      document.documentElement.style.overflow = 'auto';
+      document.documentElement.style.overflowY = 'auto';
+      document.documentElement.style.overflowX = 'hidden';
+
+      document.body.style.height = 'auto';
+      document.body.style.overflow = 'auto';
+      document.body.style.overflowY = 'auto';
+      document.body.style.overflowX = 'hidden';
+      document.body.style.position = 'static';
+      document.body.style.width = '100%';
+
+      // Also fix the root div
+      const root = document.getElementById('root');
+      if (root) {
+        root.style.height = 'auto';
+        root.style.overflow = 'visible';
+        root.style.position = 'static';
+        root.style.width = '100%';
+      }
+
+      // Remove any MUI or other library styles that might interfere
+      const allElements = document.querySelectorAll('*');
+      allElements.forEach(el => {
+        const styles = window.getComputedStyle(el);
+        if (styles.position === 'fixed' && el !== containerRef.current?.querySelector('.homepage-header') &&
+          !el.classList.contains('background-effects') && !el.classList.contains('grid-overlay')) {
+          // Don't touch our intentional fixed elements
+          console.log('Found potentially interfering fixed element:', el);
+        }
+      });
+    };
+
+    // Force enable scrolling immediately and after a delay
+    forceScrollEnable();
+    setTimeout(forceScrollEnable, 100);
+
     // Trigger loading animation
     const loadTimer = setTimeout(() => {
       setIsLoaded(true);
-    }, 100);
+    }, 200);
 
     // Feature rotation
     const featureTimer = setInterval(() => {
       setCurrentFeature(prev => (prev + 1) % features.length);
     }, 3000);
 
+    // Scroll handler for parallax effects
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    // Debug logging
+    setTimeout(() => {
+      console.log('=== SCROLL DEBUG INFO ===');
+      console.log('Document height:', document.documentElement.scrollHeight);
+      console.log('Window height:', window.innerHeight);
+      console.log('Body height:', document.body.scrollHeight);
+      console.log('Can scroll:', document.documentElement.scrollHeight > window.innerHeight);
+      console.log('Document overflow:', window.getComputedStyle(document.documentElement).overflow);
+      console.log('Body overflow:', window.getComputedStyle(document.body).overflow);
+      console.log('Root element height:', document.getElementById('root')?.scrollHeight);
+      console.log('Container height:', containerRef.current?.scrollHeight);
+    }, 500);
+
     return () => {
       clearTimeout(loadTimer);
       clearInterval(featureTimer);
+      window.removeEventListener('scroll', handleScroll);
     };
   }, [features.length]);
 
   const handleLogin = () => {
-    navigate('/login');
+    // Add smooth transition effect
+    document.body.style.transition = 'opacity 0.3s ease';
+    document.body.style.opacity = '0.8';
+
+    setTimeout(() => {
+      navigate('/login'); // Navigate to login page
+      document.body.style.opacity = '1';
+    }, 300);
   };
 
   const stats = [
@@ -46,29 +116,65 @@ const HomePage = () => {
   ];
 
   return (
-    <div className={`homepage-container ${isLoaded ? 'loaded' : ''}`}>
-      {/* Animated background elements */}
+    <div
+      ref={containerRef}
+      className={`homepage-container ${isLoaded ? 'loaded' : ''}`}
+      style={{
+        '--scroll-y': `${scrollY}px`,
+        minHeight: '200vh' // Force container to be tall enough to scroll
+      }}
+    >
+      {/* Enhanced background effects with parallax */}
       <div className="background-effects">
-        <div className="bg-shape bg-shape-1"></div>
-        <div className="bg-shape bg-shape-2"></div>
-        <div className="bg-shape bg-shape-3"></div>
+        <div
+          className="bg-shape bg-shape-1"
+          style={{
+            transform: `translateY(${scrollY * 0.3}px) rotate(${scrollY * 0.1}deg)`
+          }}
+        ></div>
+        <div
+          className="bg-shape bg-shape-2"
+          style={{
+            transform: `translateY(${scrollY * -0.2}px) rotate(${scrollY * -0.1}deg)`
+          }}
+        ></div>
+        <div
+          className="bg-shape bg-shape-3"
+          style={{
+            transform: `translateY(${scrollY * 0.4}px) rotate(${scrollY * 0.15}deg)`
+          }}
+        ></div>
         <div className="bg-particles">
-          {[...Array(20)].map((_, i) => (
-            <div key={i} className={`particle particle-${i + 1}`}></div>
+          {[...Array(30)].map((_, i) => (
+            <div
+              key={i}
+              className={`particle particle-${i + 1}`}
+              style={{
+                transform: `translateY(${scrollY * (0.1 + (i % 5) * 0.05)}px)`
+              }}
+            ></div>
           ))}
         </div>
       </div>
 
-      {/* Grid pattern overlay */}
-      <div className="grid-overlay"></div>
+      {/* Enhanced grid pattern overlay */}
+      <div
+        className="grid-overlay"
+        style={{
+          transform: `translateY(${scrollY * 0.1}px)`
+        }}
+      ></div>
 
       <div className="homepage-content">
-        {/* Header */}
+        {/* Enhanced Header with glassmorphism */}
         <header className={`homepage-header ${isLoaded ? 'animate-in' : ''}`}>
           <div className="header-container">
             <div className="logo-section">
               <div className="logo-wrapper">
-                <div className="logo-icon">🏠</div>
+                <div className="logo-icon">
+                  <span className="logo-main">🏠</span>
+                  <div className="logo-glow"></div>
+                </div>
                 <div className="logo-sparkle">✨</div>
               </div>
               <div className="brand-info">
@@ -79,23 +185,25 @@ const HomePage = () => {
             <button className="header-login-btn" onClick={handleLogin}>
               <span>Login</span>
               <div className="btn-arrow">→</div>
+              <div className="btn-ripple"></div>
             </button>
           </div>
         </header>
 
-        {/* Hero Section */}
+        {/* Enhanced Hero Section */}
         <main className="homepage-main">
           <div className="main-container">
-            {/* Welcome section */}
+            {/* Welcome section with improved animations */}
             <div className={`hero-section ${isLoaded ? 'animate-in delay-300' : ''}`}>
               <div className="hero-content">
                 <div className="hero-badge">
                   <span className="badge-icon">🚀</span>
                   <span>Next Generation Community Platform</span>
+                  <div className="badge-shimmer"></div>
                 </div>
                 <h1 className="hero-title">
-                  Transform Your
-                  <span className="gradient-text"> Community Experience</span>
+                  <span className="title-line">Transform Your</span>
+                  <span className="gradient-text title-line"> Community Experience</span>
                 </h1>
                 <p className="hero-description">
                   Discover the future of gated community management with our comprehensive,
@@ -103,7 +211,7 @@ const HomePage = () => {
                   and thrive in your digital community ecosystem.
                 </p>
 
-                {/* Primary CTA */}
+                {/* Enhanced Primary CTA */}
                 <div className="hero-actions">
                   <button
                     className={`primary-cta ${hoveredCard === 'login' ? 'hovered' : ''}`}
@@ -112,84 +220,103 @@ const HomePage = () => {
                     onClick={handleLogin}
                   >
                     <div className="cta-content">
-                      <div className="cta-icon">🔐</div>
+                      <div className="cta-icon">
+                        <span>🔐</span>
+                        <div className="icon-pulse"></div>
+                      </div>
                       <div className="cta-text">
                         <span className="cta-title">Access Your Portal</span>
                         <span className="cta-subtitle">Secure community dashboard</span>
                       </div>
                       <div className="cta-arrow">→</div>
                     </div>
+                    <div className="cta-bg-effect"></div>
                   </button>
                 </div>
 
-                {/* Rotating Features */}
+                {/* Enhanced Rotating Features */}
                 <div className="rotating-features">
                   <div className="feature-indicator">
-                    <div className={`feature-item active`}>
+                    <div className="feature-item active">
                       <span className="feature-icon">{features[currentFeature].icon}</span>
                       <span className="feature-text">{features[currentFeature].text}</span>
+                      <div className="feature-progress">
+                        <div className="progress-bar"></div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Stats Section */}
+            {/* Enhanced Stats Section */}
             <div className={`stats-section ${isLoaded ? 'animate-in delay-600' : ''}`}>
               <div className="stats-grid">
                 {stats.map((stat, index) => (
                   <div key={index} className={`stat-card delay-${(index + 1) * 100}`}>
                     <div className="stat-icon">{stat.icon}</div>
-                    <div className="stat-number">{stat.number}</div>
+                    <div className="stat-number">
+                      <span className="number-counter">{stat.number}</span>
+                    </div>
                     <div className="stat-label">{stat.label}</div>
+                    <div className="stat-glow"></div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Features highlight */}
+            {/* Enhanced Features showcase */}
             <div className={`features-showcase ${isLoaded ? 'animate-in delay-900' : ''}`}>
-              <h2 className="features-title">Why Choose GCMS?</h2>
+              <h2 className="features-title">
+                <span>Why Choose </span>
+                <span className="title-highlight">GCMS</span>
+                <span>?</span>
+              </h2>
               <div className="features-grid">
                 {features.map((feature, index) => (
-                  <div key={index} className={`feature-card delay-${index * 100}`}>
+                  <div
+                    key={index}
+                    className={`feature-card delay-${index * 100}`}
+                    onMouseEnter={() => setHoveredCard(`feature-${index}`)}
+                    onMouseLeave={() => setHoveredCard(null)}
+                  >
                     <div className={`feature-icon-wrapper ${feature.color}`}>
                       <span className="feature-icon-large">{feature.icon}</span>
+                      <div className="icon-background"></div>
                     </div>
                     <h3 className="feature-title">{feature.text}</h3>
+                    <div className="feature-hover-effect"></div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Trust Indicators */}
+            {/* Enhanced Trust Indicators */}
             <div className={`trust-section ${isLoaded ? 'animate-in delay-1200' : ''}`}>
               <div className="trust-content">
                 <h3 className="trust-title">Trusted by Communities Worldwide</h3>
                 <div className="trust-badges">
-                  <div className="trust-badge">
-                    <span className="trust-icon">🛡️</span>
-                    <span>ISO 27001 Certified</span>
-                  </div>
-                  <div className="trust-badge">
-                    <span className="trust-icon">🔒</span>
-                    <span>GDPR Compliant</span>
-                  </div>
-                  <div className="trust-badge">
-                    <span className="trust-icon">⭐</span>
-                    <span>4.9/5 Rating</span>
-                  </div>
-                  <div className="trust-badge">
-                    <span className="trust-icon">🏆</span>
-                    <span>Award Winning</span>
-                  </div>
+                  {[
+                    { icon: '🛡️', text: 'ISO 27001 Certified' },
+                    { icon: '🔒', text: 'GDPR Compliant' },
+                    { icon: '⭐', text: '4.9/5 Rating' },
+                    { icon: '🏆', text: 'Award Winning' }
+                  ].map((badge, index) => (
+                    <div key={index} className="trust-badge">
+                      <span className="trust-icon">{badge.icon}</span>
+                      <span>{badge.text}</span>
+                      <div className="badge-glow"></div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
+
+
           </div>
         </main>
 
-        {/* Footer */}
+        {/* Enhanced Footer */}
         <footer className={`homepage-footer ${isLoaded ? 'animate-in delay-1500' : ''}`}>
           <div className="footer-container">
             <div className="footer-content">

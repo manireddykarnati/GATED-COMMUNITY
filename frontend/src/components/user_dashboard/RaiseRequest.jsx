@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
+import "./RaiseRequest.css";
 
 const RaiseRequest = ({ plot_id, user_id, onClose }) => {
     const [formData, setFormData] = useState({
@@ -19,14 +20,12 @@ const RaiseRequest = ({ plot_id, user_id, onClose }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         try {
             await axios.post("/api/user/maintenance", {
                 plot_id,
                 resident_id: user_id,
                 ...formData,
             });
-
             Swal.fire("Success", "Request raised successfully", "success");
             onClose();
         } catch (err) {
@@ -36,9 +35,9 @@ const RaiseRequest = ({ plot_id, user_id, onClose }) => {
     };
 
     return (
-        <div className="request-form" style={{ background: "#f9f9f9", padding: "20px", border: "1px solid #ccc" }}>
-            <h3>Raise New Maintenance Request</h3>
-            <form onSubmit={handleSubmit}>
+        <div className="raise-request-container">
+            <h2 className="form-title">Raise New Maintenance Request</h2>
+            <form className="raise-request-form" onSubmit={handleSubmit}>
                 <input
                     type="text"
                     name="title"
@@ -46,7 +45,7 @@ const RaiseRequest = ({ plot_id, user_id, onClose }) => {
                     value={formData.title}
                     onChange={handleChange}
                     required
-                /><br />
+                />
                 <textarea
                     name="description"
                     placeholder="Description"
@@ -54,25 +53,25 @@ const RaiseRequest = ({ plot_id, user_id, onClose }) => {
                     value={formData.description}
                     onChange={handleChange}
                     required
-                /><br />
-                <label>Category:</label>
+                />
+                <label>Category</label>
                 <select name="category" value={formData.category} onChange={handleChange}>
                     <option value="General">General</option>
                     <option value="Electrical">Electrical</option>
                     <option value="Plumbing">Plumbing</option>
                     <option value="Security">Security</option>
-                </select><br />
-                <label>Priority:</label>
+                </select>
+                <label>Priority</label>
                 <select name="priority" value={formData.priority} onChange={handleChange}>
                     <option value="low">Low</option>
                     <option value="normal">Normal</option>
                     <option value="high">High</option>
                     <option value="urgent">Urgent</option>
-                </select><br />
-                <button type="submit">Submit</button>
-                <button type="button" onClick={onClose} style={{ marginLeft: "10px" }}>
-                    Cancel
-                </button>
+                </select>
+                <div className="form-actions">
+                    <button type="submit" className="submit-btn">Submit</button>
+                    <button type="button" className="cancel-btn" onClick={onClose}>Cancel</button>
+                </div>
             </form>
         </div>
     );
