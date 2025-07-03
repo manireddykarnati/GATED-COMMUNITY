@@ -144,16 +144,37 @@ router.get('/flats/:plot_id', async (req, res) => {
 // Add flat
 router.post('/flats', async (req, res) => {
   const { plot_id, flat_no, eb_card } = req.body;
+
   try {
+    // Validate required fields
+    if (!plot_id || !flat_no) {
+      return res.status(400).json({ message: 'Plot ID and flat number are required' });
+    }
+
+    // Check if flat number already exists in this plot
+    const checkResult = await pool.query(
+      'SELECT flat_id FROM flats WHERE plot_id = $1 AND flat_no = $2',
+      [plot_id, flat_no]
+    );
+
+    if (checkResult.rows.length > 0) {
+      return res.status(400).json({ message: 'Flat number already exists in this plot' });
+    }
+
+    // Insert new flat
     const result = await pool.query(
       `INSERT INTO flats (plot_id, flat_no, eb_card)
        VALUES ($1, $2, $3) RETURNING *`,
-      [plot_id, flat_no, eb_card]
+      [plot_id, flat_no, eb_card || null]
     );
-    res.status(201).json(result.rows[0]);
+
+    res.status(201).json({
+      message: 'Flat added successfully',
+      flat: result.rows[0]
+    });
   } catch (err) {
     console.error('Error adding flat:', err);
-    res.status(500).json({ success: false, message: 'Failed to add flat' });
+    res.status(500).json({ message: 'Failed to add flat' });
   }
 });
 
@@ -161,28 +182,80 @@ router.post('/flats', async (req, res) => {
 router.put('/flats/:id', async (req, res) => {
   const { id } = req.params;
   const { flat_no, eb_card } = req.body;
+
   try {
+    if (!flat_no) {
+      return res.status(400).json({ message: 'Flat number is required' });
+    }
+
+    // Check if the flat exists
+    const checkResult = await pool.query('SELECT * FROM flats WHERE flat_id = $1', [id]);
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Flat not found' });
+    }
+
+    const currentFlat = checkResult.rows[0];
+
+    // Check if flat number already exists in this plot (excluding current flat)
+    const duplicateResult = await pool.query(
+      `SELECT flat_id FROM flats 
+       WHERE plot_id = $1 AND flat_no = $2 AND flat_id != $3`,
+      [currentFlat.plot_id, flat_no, id]
+    );
+
+    if (duplicateResult.rows.length > 0) {
+      return res.status(400).json({ message: 'Flat number already exists in this plot' });
+    }
+
+    // Update flat
     const result = await pool.query(
       `UPDATE flats SET flat_no = $1, eb_card = $2
        WHERE flat_id = $3 RETURNING *`,
-      [flat_no, eb_card, id]
+      [flat_no, eb_card || null, id]
     );
-    res.json(result.rows[0]);
+
+    res.json({
+      message: 'Flat updated successfully',
+      flat: result.rows[0]
+    });
   } catch (err) {
     console.error('Error updating flat:', err);
-    res.status(500).json({ success: false, message: 'Failed to update flat' });
+    res.status(500).json({ message: 'Failed to update flat' });
   }
 });
 
 // Delete flat
 router.delete('/flats/:id', async (req, res) => {
   const { id } = req.params;
+
   try {
-    await pool.query('DELETE FROM flats WHERE flat_id = $1', [id]);
-    res.json({ success: true });
+    // Check if flat exists
+    const checkResult = await pool.query('SELECT * FROM flats WHERE flat_id = $1', [id]);
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Flat not found' });
+    }
+
+    // Check if flat has any residents
+    const residentsResult = await pool.query('SELECT resident_id FROM residents WHERE flat_id = $1', [id]);
+
+    if (residentsResult.rows.length > 0) {
+      return res.status(400).json({
+        message: 'Cannot delete flat. There are residents associated with this flat.'
+      });
+    }
+
+    // Delete flat
+    const deleteResult = await pool.query('DELETE FROM flats WHERE flat_id = $1 RETURNING *', [id]);
+
+    res.json({
+      message: 'Flat deleted successfully',
+      flat: deleteResult.rows[0]
+    });
   } catch (err) {
     console.error('Error deleting flat:', err);
-    res.status(500).json({ success: false, message: 'Failed to delete flat' });
+    res.status(500).json({ message: 'Failed to delete flat' });
   }
 });
 
@@ -509,24 +582,47 @@ router.get('/reports/overdue-payments/:org_id', async (req, res) => {
   }
 });
 
-// ========== SEND NOTIFICATIONS ==========
+// ========== SEND NOTIFICATIONS (FIXED) ==========
 router.post('/notifications', async (req, res) => {
   const { sender_id, recipient_type, recipient_id, title, message, priority } = req.body;
 
   try {
+    let finalRecipientId = recipient_id;
+
+    // Fix recipient_id logic based on recipient_type
+    if (recipient_type === 'all') {
+      // For "all" notifications, use org_id as recipient_id
+      // Get org_id from sender (assuming sender is admin)
+      const senderResult = await pool.query(
+        'SELECT org_id FROM users_login WHERE user_id = $1',
+        [sender_id]
+      );
+      finalRecipientId = senderResult.rows[0]?.org_id || 1; // Default to org_id = 1
+    }
+
     const result = await pool.query(
       `INSERT INTO notifications (
         sender_id, recipient_type, recipient_id,
         title, message, priority
       ) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [sender_id, recipient_type, recipient_id, title, message, priority || 'normal']
+      [sender_id, recipient_type, finalRecipientId, title, message, priority || 'normal']
     );
-    res.status(201).json(result.rows[0]);
+
+    res.status(201).json({
+      success: true,
+      message: 'Notification sent successfully',
+      notification: result.rows[0]
+    });
   } catch (err) {
     console.error('Error sending notification:', err);
-    res.status(500).json({ message: 'Failed to send notification' });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send notification',
+      error: err.message
+    });
   }
 });
+
 // ========== MAINTENANCE REQUESTS ==========
 
 // Raise new maintenance request
@@ -548,5 +644,545 @@ router.post('/maintenance', async (req, res) => {
   }
 });
 
+// ========== ADDITIONAL ROUTES ==========
+
+// Get all plots (without org_id filter) - for FlatsManagement
+router.get('/plots', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT p.*, s.street_name 
+       FROM plots p
+       LEFT JOIN streets s ON p.street_id = s.street_id
+       ORDER BY s.street_name, p.plot_no`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching plots:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch plots' });
+  }
+});
+
+// Get all streets (without org_id filter) - for FlatsManagement  
+router.get('/streets', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM streets ORDER BY street_name');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching streets:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch streets' });
+  }
+});
+
+// Get flats by plot ID
+router.get('/flats/plot/:plotId', async (req, res) => {
+  const { plotId } = req.params;
+  try {
+    const result = await pool.query(
+      `SELECT f.*, p.plot_no, p.plot_type 
+       FROM flats f
+       JOIN plots p ON f.plot_id = p.plot_id
+       WHERE f.plot_id = $1
+       ORDER BY f.flat_no`,
+      [plotId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching flats:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch flats' });
+  }
+});
+
+// Bulk add flats
+router.post('/flats/bulk', async (req, res) => {
+  const { flats } = req.body;
+
+  if (!flats || !Array.isArray(flats) || flats.length === 0) {
+    return res.status(400).json({ message: 'Flats array is required' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const successfulFlats = [];
+    const failedFlats = [];
+
+    // Process each flat
+    for (const flat of flats) {
+      try {
+        if (!flat.plot_id || !flat.flat_no) {
+          failedFlats.push({
+            flat_no: flat.flat_no || 'Unknown',
+            reason: 'Plot ID and flat number are required'
+          });
+          continue;
+        }
+
+        // Check if flat already exists
+        const checkResult = await client.query(
+          'SELECT flat_id FROM flats WHERE plot_id = $1 AND flat_no = $2',
+          [flat.plot_id, flat.flat_no]
+        );
+
+        if (checkResult.rows.length > 0) {
+          failedFlats.push({
+            flat_no: flat.flat_no,
+            reason: 'Flat number already exists'
+          });
+          continue;
+        }
+
+        // Insert flat
+        const insertResult = await client.query(
+          `INSERT INTO flats (plot_id, flat_no, eb_card) 
+           VALUES ($1, $2, $3) 
+           RETURNING *`,
+          [flat.plot_id, flat.flat_no, flat.eb_card || null]
+        );
+
+        successfulFlats.push(insertResult.rows[0]);
+      } catch (flatError) {
+        console.error(`Error adding flat ${flat.flat_no}:`, flatError);
+        failedFlats.push({
+          flat_no: flat.flat_no || 'Unknown',
+          reason: 'Database error'
+        });
+      }
+    }
+
+    await client.query('COMMIT');
+
+    res.status(201).json({
+      message: `${successfulFlats.length} flats added successfully`,
+      successful: successfulFlats,
+      failed: failedFlats,
+      totalRequested: flats.length,
+      totalAdded: successfulFlats.length
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error bulk adding flats:', error);
+    res.status(500).json({ message: 'Failed to add flats' });
+  } finally {
+    client.release();
+  }
+});
+
+// Get flat details with residents
+router.get('/flats/:flatId/details', async (req, res) => {
+  const { flatId } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT 
+        f.*,
+        p.plot_no,
+        p.plot_type,
+        s.street_name,
+        r.resident_id,
+        r.name as resident_name,
+        r.contact_number,
+        r.email
+      FROM flats f
+      JOIN plots p ON f.plot_id = p.plot_id
+      JOIN streets s ON p.street_id = s.street_id
+      LEFT JOIN residents r ON f.flat_id = r.flat_id
+      WHERE f.flat_id = $1`,
+      [flatId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Flat not found' });
+    }
+
+    // Group residents for this flat
+    const flatData = {
+      flat_id: result.rows[0].flat_id,
+      flat_no: result.rows[0].flat_no,
+      eb_card: result.rows[0].eb_card,
+      plot_id: result.rows[0].plot_id,
+      plot_no: result.rows[0].plot_no,
+      plot_type: result.rows[0].plot_type,
+      street_name: result.rows[0].street_name,
+      residents: result.rows
+        .filter(row => row.resident_id)
+        .map(row => ({
+          resident_id: row.resident_id,
+          name: row.resident_name,
+          contact_number: row.contact_number,
+          email: row.email
+        }))
+    };
+
+    res.json(flatData);
+  } catch (err) {
+    console.error('Error fetching flat details:', err);
+    res.status(500).json({ message: 'Failed to fetch flat details' });
+  }
+});
+
+// Get flats summary for dashboard
+router.get('/flats/summary', async (req, res) => {
+  try {
+    const summaryQuery = `
+      SELECT 
+        COUNT(f.flat_id) as total_flats,
+        COUNT(r.resident_id) as occupied_flats,
+        COUNT(f.flat_id) - COUNT(r.resident_id) as vacant_flats,
+        COUNT(DISTINCT f.plot_id) as plots_with_flats
+      FROM flats f
+      LEFT JOIN residents r ON f.flat_id = r.flat_id
+    `;
+
+    const plotTypeQuery = `
+      SELECT 
+        p.plot_type,
+        COUNT(f.flat_id) as flat_count
+      FROM plots p
+      LEFT JOIN flats f ON p.plot_id = f.plot_id
+      WHERE f.flat_id IS NOT NULL
+      GROUP BY p.plot_type
+    `;
+
+    const [summaryResult, plotTypeResult] = await Promise.all([
+      pool.query(summaryQuery),
+      pool.query(plotTypeQuery)
+    ]);
+
+    res.json({
+      summary: summaryResult.rows[0],
+      byPlotType: plotTypeResult.rows
+    });
+  } catch (err) {
+    console.error('Error fetching flats summary:', err);
+    res.status(500).json({ message: 'Failed to fetch flats summary' });
+  }
+});
+
+// ========== MAINTENANCE REQUESTS MANAGEMENT ROUTES ==========
+
+// Get all maintenance requests with resident and plot details
+router.get('/maintenance-requests', async (req, res) => {
+  try {
+    const query = `
+            SELECT 
+                mr.*,
+                r.name as resident_name,
+                r.contact_number,
+                r.email,
+                p.plot_no,
+                f.flat_no,
+                s.street_name
+            FROM maintenance_requests mr
+            JOIN residents r ON mr.resident_id = r.resident_id
+            JOIN plots p ON mr.plot_id = p.plot_id
+            LEFT JOIN flats f ON r.flat_id = f.flat_id
+            LEFT JOIN streets s ON p.street_id = s.street_id
+            ORDER BY 
+                CASE mr.priority 
+                    WHEN 'urgent' THEN 1 
+                    WHEN 'high' THEN 2 
+                    WHEN 'normal' THEN 3 
+                    WHEN 'low' THEN 4 
+                END,
+                mr.created_at DESC
+        `;
+
+    const result = await pool.query(query);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching maintenance requests:', error);
+    res.status(500).json({ message: 'Failed to fetch maintenance requests' });
+  }
+});
+
+// Get recent maintenance requests (for notifications dropdown)
+router.get('/maintenance-requests/recent', async (req, res) => {
+  try {
+    const query = `
+            SELECT 
+                mr.*,
+                r.name as resident_name,
+                p.plot_no,
+                f.flat_no
+            FROM maintenance_requests mr
+            JOIN residents r ON mr.resident_id = r.resident_id
+            JOIN plots p ON mr.plot_id = p.plot_id
+            LEFT JOIN flats f ON r.flat_id = f.flat_id
+            WHERE mr.status IN ('open', 'in_progress')
+            ORDER BY mr.created_at DESC
+            LIMIT 10
+        `;
+
+    const result = await pool.query(query);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching recent maintenance requests:', error);
+    res.status(500).json({ message: 'Failed to fetch recent maintenance requests' });
+  }
+});
+
+// Get maintenance requests counts/summary
+router.get('/maintenance-requests/summary', async (req, res) => {
+  try {
+    const query = `
+            SELECT 
+                COUNT(*) as total_requests,
+                COUNT(CASE WHEN status = 'open' THEN 1 END) as open_requests,
+                COUNT(CASE WHEN status = 'in_progress' THEN 1 END) as in_progress_requests,
+                COUNT(CASE WHEN status = 'resolved' THEN 1 END) as resolved_requests,
+                COUNT(CASE WHEN status = 'closed' THEN 1 END) as closed_requests,
+                COUNT(CASE WHEN priority = 'urgent' THEN 1 END) as urgent_requests,
+                COUNT(CASE WHEN priority = 'high' THEN 1 END) as high_priority_requests,
+                COUNT(CASE WHEN status IN ('open', 'in_progress') THEN 1 END) as pending_requests
+            FROM maintenance_requests
+        `;
+
+    const result = await pool.query(query);
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error fetching maintenance requests summary:', error);
+    res.status(500).json({ message: 'Failed to fetch maintenance requests summary' });
+  }
+});
+
+// Update maintenance request status
+router.put('/maintenance-requests/:id', async (req, res) => {
+  const { id } = req.params;
+  const { status, assigned_to, notes } = req.body;
+
+  try {
+    // Validate status
+    const validStatuses = ['open', 'in_progress', 'resolved', 'closed'];
+    if (status && !validStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    // Check if request exists
+    const checkResult = await pool.query(
+      'SELECT * FROM maintenance_requests WHERE request_id = $1',
+      [id]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Maintenance request not found' });
+    }
+
+    let updateQuery = 'UPDATE maintenance_requests SET updated_at = CURRENT_TIMESTAMP';
+    const queryParams = [];
+    let paramCount = 1;
+
+    if (status) {
+      updateQuery += `, status = $${paramCount}`;
+      queryParams.push(status);
+      paramCount++;
+
+      // If marking as resolved, set resolved_at timestamp
+      if (status === 'resolved') {
+        updateQuery += `, resolved_at = CURRENT_TIMESTAMP`;
+      }
+    }
+
+    if (assigned_to !== undefined) {
+      updateQuery += `, assigned_to = $${paramCount}`;
+      queryParams.push(assigned_to || null);
+      paramCount++;
+    }
+
+    updateQuery += ` WHERE request_id = $${paramCount} RETURNING *`;
+    queryParams.push(id);
+
+    const result = await pool.query(updateQuery, queryParams);
+
+    res.json({
+      message: 'Maintenance request updated successfully',
+      request: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error updating maintenance request:', error);
+    res.status(500).json({ message: 'Failed to update maintenance request' });
+  }
+});
+
+// Get maintenance request details by ID
+router.get('/maintenance-requests/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const query = `
+            SELECT 
+                mr.*,
+                r.name as resident_name,
+                r.contact_number,
+                r.email,
+                p.plot_no,
+                f.flat_no,
+                s.street_name
+            FROM maintenance_requests mr
+            JOIN residents r ON mr.resident_id = r.resident_id
+            JOIN plots p ON mr.plot_id = p.plot_id
+            LEFT JOIN flats f ON r.flat_id = f.flat_id
+            LEFT JOIN streets s ON p.street_id = s.street_id
+            WHERE mr.request_id = $1
+        `;
+
+    const result = await pool.query(query, [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Maintenance request not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error fetching maintenance request details:', error);
+    res.status(500).json({ message: 'Failed to fetch maintenance request details' });
+  }
+});
+
+// Delete maintenance request (admin only)
+router.delete('/maintenance-requests/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Check if request exists
+    const checkResult = await pool.query(
+      'SELECT * FROM maintenance_requests WHERE request_id = $1',
+      [id]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Maintenance request not found' });
+    }
+
+    // Delete the request
+    const deleteResult = await pool.query(
+      'DELETE FROM maintenance_requests WHERE request_id = $1 RETURNING *',
+      [id]
+    );
+
+    res.json({
+      message: 'Maintenance request deleted successfully',
+      request: deleteResult.rows[0]
+    });
+  } catch (error) {
+    console.error('Error deleting maintenance request:', error);
+    res.status(500).json({ message: 'Failed to delete maintenance request' });
+  }
+});
+
+// Get maintenance requests by plot
+router.get('/maintenance-requests/plot/:plotId', async (req, res) => {
+  const { plotId } = req.params;
+
+  try {
+    const query = `
+            SELECT 
+                mr.*,
+                r.name as resident_name,
+                r.contact_number,
+                f.flat_no
+            FROM maintenance_requests mr
+            JOIN residents r ON mr.resident_id = r.resident_id
+            LEFT JOIN flats f ON r.flat_id = f.flat_id
+            WHERE mr.plot_id = $1
+            ORDER BY mr.created_at DESC
+        `;
+
+    const result = await pool.query(query, [plotId]);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching maintenance requests for plot:', error);
+    res.status(500).json({ message: 'Failed to fetch maintenance requests for plot' });
+  }
+});
+
+// Get maintenance requests by resident
+router.get('/maintenance-requests/resident/:residentId', async (req, res) => {
+  const { residentId } = req.params;
+
+  try {
+    const query = `
+            SELECT 
+                mr.*,
+                p.plot_no,
+                f.flat_no,
+                s.street_name
+            FROM maintenance_requests mr
+            JOIN plots p ON mr.plot_id = p.plot_id
+            LEFT JOIN flats f ON mr.plot_id = f.plot_id AND EXISTS(
+                SELECT 1 FROM residents r WHERE r.resident_id = mr.resident_id AND r.flat_id = f.flat_id
+            )
+            LEFT JOIN streets s ON p.street_id = s.street_id
+            WHERE mr.resident_id = $1
+            ORDER BY mr.created_at DESC
+        `;
+
+    const result = await pool.query(query, [residentId]);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching maintenance requests for resident:', error);
+    res.status(500).json({ message: 'Failed to fetch maintenance requests for resident' });
+  }
+});
+
+// Assign maintenance request to someone
+router.put('/maintenance-requests/:id/assign', async (req, res) => {
+  const { id } = req.params;
+  const { assigned_to } = req.body;
+
+  try {
+    if (!assigned_to) {
+      return res.status(400).json({ message: 'assigned_to is required' });
+    }
+
+    const result = await pool.query(
+      `UPDATE maintenance_requests 
+             SET assigned_to = $1, updated_at = CURRENT_TIMESTAMP, status = 'in_progress'
+             WHERE request_id = $2 
+             RETURNING *`,
+      [assigned_to, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Maintenance request not found' });
+    }
+
+    res.json({
+      message: 'Maintenance request assigned successfully',
+      request: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error assigning maintenance request:', error);
+    res.status(500).json({ message: 'Failed to assign maintenance request' });
+  }
+});
+
+// Mark maintenance request as resolved
+router.put('/maintenance-requests/:id/resolve', async (req, res) => {
+  const { id } = req.params;
+  const { resolution_notes } = req.body;
+
+  try {
+    const result = await pool.query(
+      `UPDATE maintenance_requests 
+             SET status = 'resolved', resolved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+             WHERE request_id = $1 
+             RETURNING *`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Maintenance request not found' });
+    }
+
+    res.json({
+      message: 'Maintenance request marked as resolved',
+      request: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error resolving maintenance request:', error);
+    res.status(500).json({ message: 'Failed to resolve maintenance request' });
+  }
+});
 
 module.exports = router;

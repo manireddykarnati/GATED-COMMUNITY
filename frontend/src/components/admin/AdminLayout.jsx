@@ -1,9 +1,10 @@
 // components/admin/AdminLayout.jsx - FIXED NAVIGATION
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     AppBar, Toolbar, Typography, CssBaseline, Drawer, List, ListItem, ListItemIcon,
-    ListItemText, Box, IconButton, Avatar, Chip, Divider, Tooltip
+    ListItemText, Box, IconButton, Avatar, Chip, Divider, Tooltip, Popover,
+    Paper, Badge, Button
 } from '@mui/material';
 import {
     People as PeopleIcon,
@@ -13,11 +14,14 @@ import {
     LightMode, DarkMode,
     LocationCity as LocationCityIcon,
     HomeWork as HomeWorkIcon,
+    Apartment as ApartmentIcon,
     Notifications as NotificationsIcon,
     Logout as LogoutIcon,
     Settings as SettingsIcon,
     Search as SearchIcon,
-    Dashboard as DashboardIcon
+    Dashboard as DashboardIcon,
+    Build as BuildIcon,
+    Schedule as ScheduleIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import './AdminLayout.css';
@@ -47,6 +51,13 @@ const navItems = [
         color: '#10b981'
     },
     {
+        label: 'Flats Management',
+        icon: <ApartmentIcon />,
+        path: '/admin-dashboard/flats',
+        description: 'Manage flats within plots',
+        color: '#14b8a6'
+    },
+    {
         label: 'Residents Management',
         icon: <PeopleIcon />,
         path: '/admin-dashboard/residents',
@@ -58,6 +69,13 @@ const navItems = [
         icon: <PaymentsIcon />,
         path: '/admin-dashboard/payments',
         description: 'Handle payment processing',
+        color: '#f59e0b'
+    },
+    {
+        label: 'Maintenance Requests',
+        icon: <BuildIcon />,
+        path: '/admin-dashboard/maintenance-requests',
+        description: 'Manage maintenance requests',
         color: '#f59e0b'
     },
     {
@@ -82,10 +100,46 @@ const AdminLayout = () => {
     const [darkMode, setDarkMode] = useState(true);
     const [mobileOpen, setMobileOpen] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
+    const [notificationsAnchor, setNotificationsAnchor] = useState(null);
+    const [recentRequests, setRecentRequests] = useState([]);
+    const [requestsCount, setRequestsCount] = useState(0);
+
+    const loadRecentRequests = useCallback(async () => {
+        try {
+            const response = await fetch('/api/admin/maintenance-requests/recent');
+            if (response.ok) {
+                const data = await response.json();
+                setRecentRequests(data);
+                setRequestsCount(data.filter(req => req.status === 'open').length);
+            }
+        } catch (error) {
+            console.error('Error loading recent requests:', error);
+        }
+    }, []);
 
     useEffect(() => {
         setIsLoaded(true);
-    }, []);
+        loadRecentRequests();
+    }, [loadRecentRequests]);
+
+    const handleNotificationsClick = (event) => {
+        setNotificationsAnchor(event.currentTarget);
+        loadRecentRequests(); // Refresh when opened
+    };
+
+    const handleNotificationsClose = () => {
+        setNotificationsAnchor(null);
+    };
+
+    const getPriorityColor = (priority) => {
+        switch (priority) {
+            case 'urgent': return '#dc2626';
+            case 'high': return '#ea580c';
+            case 'normal': return '#0891b2';
+            case 'low': return '#059669';
+            default: return '#6b7280';
+        }
+    };
 
     const handleThemeToggle = () => setDarkMode(!darkMode);
     const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
@@ -351,12 +405,154 @@ const AdminLayout = () => {
                             </Tooltip>
 
                             {/* Notifications */}
-                            <Tooltip title="Notifications" arrow>
-                                <IconButton className="action-icon notifications-btn">
-                                    <NotificationsIcon />
-                                    <span className="notification-badge">3</span>
+                            <Tooltip title="Maintenance Requests" arrow>
+                                <IconButton
+                                    className="action-icon notifications-btn"
+                                    onClick={handleNotificationsClick}
+                                >
+                                    <Badge badgeContent={requestsCount} color="error">
+                                        <NotificationsIcon />
+                                    </Badge>
                                 </IconButton>
                             </Tooltip>
+
+                            {/* Notifications Popover */}
+                            <Popover
+                                open={Boolean(notificationsAnchor)}
+                                anchorEl={notificationsAnchor}
+                                onClose={handleNotificationsClose}
+                                anchorOrigin={{
+                                    vertical: 'bottom',
+                                    horizontal: 'right',
+                                }}
+                                transformOrigin={{
+                                    vertical: 'top',
+                                    horizontal: 'right',
+                                }}
+                                PaperProps={{
+                                    sx: {
+                                        background: 'rgba(10, 11, 30, 0.95)',
+                                        backdropFilter: 'blur(30px)',
+                                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                                        borderRadius: '16px',
+                                        mt: 1,
+                                        minWidth: 350,
+                                        maxWidth: 400,
+                                        maxHeight: 500
+                                    }
+                                }}
+                            >
+                                <Box sx={{ p: 2 }}>
+                                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                                        <Typography variant="h6" color="#ffffff" display="flex" alignItems="center">
+                                            <BuildIcon sx={{ mr: 1, color: '#f59e0b' }} />
+                                            Maintenance Requests
+                                        </Typography>
+                                        {requestsCount > 0 && (
+                                            <Chip
+                                                label={`${requestsCount} Open`}
+                                                size="small"
+                                                sx={{
+                                                    background: 'rgba(239, 68, 68, 0.2)',
+                                                    color: '#ef4444',
+                                                    border: '1px solid rgba(239, 68, 68, 0.3)'
+                                                }}
+                                            />
+                                        )}
+                                    </Box>
+
+                                    {recentRequests.length > 0 ? (
+                                        <>
+                                            <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
+                                                {recentRequests.slice(0, 5).map((request) => (
+                                                    <Paper
+                                                        key={request.request_id}
+                                                        sx={{
+                                                            background: 'rgba(255, 255, 255, 0.05)',
+                                                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                                                            borderRadius: '8px',
+                                                            p: 2,
+                                                            mb: 1,
+                                                            cursor: 'pointer',
+                                                            '&:hover': {
+                                                                background: 'rgba(255, 255, 255, 0.08)'
+                                                            }
+                                                        }}
+                                                        onClick={() => {
+                                                            handleNotificationsClose();
+                                                            navigate('/admin-dashboard/maintenance-requests');
+                                                        }}
+                                                    >
+                                                        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                                                            <Typography variant="subtitle2" color="#ffffff" fontWeight="bold">
+                                                                {request.title}
+                                                            </Typography>
+                                                            <Chip
+                                                                label={request.priority.toUpperCase()}
+                                                                size="small"
+                                                                sx={{
+                                                                    background: `${getPriorityColor(request.priority)}20`,
+                                                                    color: getPriorityColor(request.priority),
+                                                                    border: `1px solid ${getPriorityColor(request.priority)}40`,
+                                                                    fontSize: '0.7rem'
+                                                                }}
+                                                            />
+                                                        </Box>
+                                                        <Typography variant="body2" color="#94a3b8" gutterBottom>
+                                                            {request.resident_name} • {request.plot_no}
+                                                            {request.flat_no && ` - Flat ${request.flat_no}`}
+                                                        </Typography>
+                                                        <Box display="flex" alignItems="center" justifyContent="space-between">
+                                                            <Typography variant="caption" color="#64748b" display="flex" alignItems="center">
+                                                                <ScheduleIcon sx={{ mr: 0.5, fontSize: 12 }} />
+                                                                {new Date(request.created_at).toLocaleDateString()}
+                                                            </Typography>
+                                                            <Chip
+                                                                label={request.status.replace('_', ' ').toUpperCase()}
+                                                                size="small"
+                                                                sx={{
+                                                                    background: request.status === 'open' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+                                                                    color: request.status === 'open' ? '#ef4444' : '#f59e0b',
+                                                                    border: `1px solid ${request.status === 'open' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`,
+                                                                    fontSize: '0.6rem'
+                                                                }}
+                                                            />
+                                                        </Box>
+                                                    </Paper>
+                                                ))}
+                                            </Box>
+
+                                            <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+
+                                            <Button
+                                                fullWidth
+                                                variant="outlined"
+                                                onClick={() => {
+                                                    handleNotificationsClose();
+                                                    navigate('/admin-dashboard/maintenance-requests');
+                                                }}
+                                                sx={{
+                                                    borderColor: '#3b82f6',
+                                                    color: '#3b82f6',
+                                                    '&:hover': {
+                                                        borderColor: '#2563eb',
+                                                        background: 'rgba(59, 130, 246, 0.1)'
+                                                    }
+                                                }}
+                                            >
+                                                View All Requests ({recentRequests.length})
+                                            </Button>
+                                        </>
+                                    ) : (
+                                        <Box textAlign="center" py={3}>
+                                            <BuildIcon sx={{ fontSize: 48, color: '#475569', mb: 1 }} />
+                                            <Typography variant="body2" color="#94a3b8">
+                                                No maintenance requests
+                                            </Typography>
+                                        </Box>
+                                    )}
+                                </Box>
+                            </Popover>
                         </div>
                     </Toolbar>
                 </AppBar>

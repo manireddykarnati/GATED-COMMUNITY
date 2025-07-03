@@ -41,7 +41,6 @@ router.put('/profile/:resident_id', async (req, res) => {
     }
 });
 
-
 // 📌 GET all payments for a specific plot
 router.get('/payments/:plot_id', async (req, res) => {
     const { plot_id } = req.params;
@@ -78,23 +77,38 @@ router.put('/payments/:payment_id/mark-paid', async (req, res) => {
     }
 });
 
-// 📌 GET notifications relevant to a user
+// 📌 GET notifications relevant to a user (FIXED) - ONLY ONE ROUTE NOW
 router.get('/notifications/:plot_id/:org_id/:user_id', async (req, res) => {
     const { plot_id, org_id, user_id } = req.params;
 
     try {
+        // Get user's street_id for street-level notifications
+        const plotResult = await pool.query(
+            'SELECT street_id FROM plots WHERE plot_id = $1',
+            [plot_id]
+        );
+        const street_id = plotResult.rows[0]?.street_id;
+
+        // Get user's resident_id for individual notifications
+        const userResult = await pool.query(
+            'SELECT resident_id FROM users_login WHERE user_id = $1',
+            [user_id]
+        );
+        const resident_id = userResult.rows[0]?.resident_id;
+
         const result = await pool.query(
             `
-      SELECT * FROM notifications
-      WHERE 
-        (
-          recipient_type = 'all' AND recipient_id = $2
-          OR recipient_type = 'plot' AND recipient_id = $1
-          OR recipient_type = 'individual' AND recipient_id = $3
-        )
-      ORDER BY created_at DESC
-      `,
-            [plot_id, org_id, user_id]
+            SELECT * FROM notifications
+            WHERE 
+              (
+                recipient_type = 'all' AND recipient_id = $1
+                OR recipient_type = 'street' AND recipient_id = $2
+                OR recipient_type = 'plot' AND recipient_id = $3
+                OR recipient_type = 'individual' AND recipient_id = $4
+              )
+            ORDER BY created_at DESC
+            `,
+            [org_id, street_id, plot_id, resident_id]
         );
 
         res.json(result.rows);
@@ -172,7 +186,5 @@ router.get('/visitors/:plot_id', async (req, res) => {
         res.status(500).json({ message: "Failed to fetch visitor logs" });
     }
 });
-
-
 
 module.exports = router;

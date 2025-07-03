@@ -5,8 +5,10 @@ import AdminLayout from './admin/AdminLayout';
 
 import StreetsManagement from './admin/StreetsManagement';
 import PlotsManagement from './admin/PlotsManagement';
+import FlatsManagement from './admin/FlatsManagement';
 import ResidentsManagement from './admin/ResidentsManagement';
 import PaymentsManagement from './admin/PaymentsManagement';
+import MaintenanceRequests from './admin/MaintenanceRequests';
 import ReportsAnalytics from './admin/ReportsAnalytics';
 import SendNotification from './admin/SendNotification';
 
@@ -67,6 +69,15 @@ const Dashboard = () => (
                     <div style={{ color: '#6ee7b7', fontSize: '0.9rem' }}>Plots</div>
                 </div>
                 <div style={{
+                    background: 'rgba(20, 184, 166, 0.1)',
+                    padding: '1rem',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(20, 184, 166, 0.3)'
+                }}>
+                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🏢</div>
+                    <div style={{ color: '#5eead4', fontSize: '0.9rem' }}>Flats</div>
+                </div>
+                <div style={{
                     background: 'rgba(139, 92, 246, 0.1)',
                     padding: '1rem',
                     borderRadius: '12px',
@@ -84,6 +95,15 @@ const Dashboard = () => (
                     <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>💳</div>
                     <div style={{ color: '#fcd34d', fontSize: '0.9rem' }}>Payments</div>
                 </div>
+                <div style={{
+                    background: 'rgba(245, 158, 11, 0.1)',
+                    padding: '1rem',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(245, 158, 11, 0.3)'
+                }}>
+                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔧</div>
+                    <div style={{ color: '#fcd34d', fontSize: '0.9rem' }}>Maintenance</div>
+                </div>
             </div>
         </div>
     </div>
@@ -99,8 +119,10 @@ const AdminDashboard = () => {
                 {/* Admin sub-routes */}
                 <Route path="streets" element={<StreetsManagement />} />
                 <Route path="plots" element={<PlotsManagement />} />
+                <Route path="flats" element={<FlatsManagement />} />
                 <Route path="residents" element={<ResidentsManagement />} />
                 <Route path="payments" element={<PaymentsManagement />} />
+                <Route path="maintenance-requests" element={<MaintenanceRequests />} />
                 <Route path="reports" element={<ReportsAnalytics />} />
                 <Route path="send-notifications" element={<SendNotification />} />
             </Route>

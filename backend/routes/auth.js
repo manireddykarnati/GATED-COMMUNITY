@@ -19,11 +19,24 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Username already exists' });
     }
 
+    // For non-admin users, try to find the resident_id
+    let resident_id = null;
+    if (user_type !== 'admin' && plot_id) {
+      const residentResult = await pool.query(
+        'SELECT resident_id FROM residents WHERE plot_id = $1 LIMIT 1',
+        [plot_id]
+      );
+
+      if (residentResult.rows.length > 0) {
+        resident_id = residentResult.rows[0].resident_id;
+      }
+    }
+
     // Insert new user (without password hashing)
     const newUser = await pool.query(
-      `INSERT INTO users_login (user_type, user_name, password, org_id, plot_id)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [user_type, user_name, password, org_id, plot_id]
+      `INSERT INTO users_login (user_type, user_name, password, org_id, plot_id, resident_id)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [user_type, user_name, password, org_id, plot_id, resident_id]
     );
 
     res.status(201).json({
@@ -65,6 +78,37 @@ router.post('/login', async (req, res) => {
 
     let displayName = user.user_name;
     let welcomeMessage = '';
+
+    // 🔧 FIX: Ensure resident_id is populated for non-admin users
+    if (user.user_type !== 'admin' && !user.resident_id && user.plot_id) {
+      console.log("🔄 Attempting to link user to resident record...");
+
+      try {
+        // Try to find resident by plot_id
+        const residentResult = await pool.query(
+          'SELECT resident_id, name FROM residents WHERE plot_id = $1 LIMIT 1',
+          [user.plot_id]
+        );
+
+        if (residentResult.rows.length > 0) {
+          const resident = residentResult.rows[0];
+          user.resident_id = resident.resident_id;
+
+          // Update the users_login table with the resident_id
+          await pool.query(
+            'UPDATE users_login SET resident_id = $1 WHERE user_id = $2',
+            [user.resident_id, user.user_id]
+          );
+
+          console.log(`✅ Linked user ${user.user_name} to resident ${resident.name} (ID: ${resident.resident_id})`);
+        } else {
+          console.log(`⚠️ No resident found for plot_id: ${user.plot_id}`);
+        }
+      } catch (linkErr) {
+        console.error('Error linking user to resident:', linkErr);
+        // Continue with login even if linking fails
+      }
+    }
 
     // If user is admin, show admin welcome
     if (user.user_type === 'admin') {
@@ -304,6 +348,89 @@ router.get('/org-users/:org_id', async (req, res) => {
   } catch (error) {
     console.error('Error fetching org users:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch users' });
+  }
+});
+
+// 🔧 UTILITY: Manually link users to residents (for admin use)
+router.post('/link-user-resident', async (req, res) => {
+  const { user_id, resident_id } = req.body;
+
+  try {
+    const result = await pool.query(
+      'UPDATE users_login SET resident_id = $1 WHERE user_id = $2 RETURNING *',
+      [resident_id, user_id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'User successfully linked to resident',
+      user: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Link user-resident error:', error);
+    res.status(500).json({ success: false, message: 'Failed to link user to resident' });
+  }
+});
+
+// 🔧 UTILITY: Fix all unlinked users (for admin use)
+router.post('/fix-user-resident-links/:org_id', async (req, res) => {
+  const { org_id } = req.params;
+
+  try {
+    // Find all users without resident_id but with plot_id
+    const unlinkedUsers = await pool.query(
+      `SELECT ul.user_id, ul.user_name, ul.plot_id 
+       FROM users_login ul
+       WHERE ul.org_id = $1 AND ul.resident_id IS NULL AND ul.plot_id IS NOT NULL AND ul.user_type != 'admin'`,
+      [org_id]
+    );
+
+    let fixedCount = 0;
+    const results = [];
+
+    for (const user of unlinkedUsers.rows) {
+      try {
+        // Find resident for this plot
+        const residentResult = await pool.query(
+          'SELECT resident_id, name FROM residents WHERE plot_id = $1 LIMIT 1',
+          [user.plot_id]
+        );
+
+        if (residentResult.rows.length > 0) {
+          const resident = residentResult.rows[0];
+
+          // Update user with resident_id
+          await pool.query(
+            'UPDATE users_login SET resident_id = $1 WHERE user_id = $2',
+            [resident.resident_id, user.user_id]
+          );
+
+          fixedCount++;
+          results.push({
+            user_name: user.user_name,
+            plot_id: user.plot_id,
+            linked_to: resident.name,
+            resident_id: resident.resident_id
+          });
+        }
+      } catch (err) {
+        console.error(`Error fixing link for user ${user.user_name}:`, err);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Fixed ${fixedCount} user-resident links`,
+      fixed_users: results,
+      total_checked: unlinkedUsers.rows.length
+    });
+  } catch (error) {
+    console.error('Fix user-resident links error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fix user-resident links' });
   }
 });
 

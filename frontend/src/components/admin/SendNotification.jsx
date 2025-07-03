@@ -62,12 +62,27 @@ const SendNotification = () => {
             return;
         }
 
+        // Validate recipient selection for specific types
+        if (recipientType !== 'all' && !recipientId) {
+            alert('Please select a recipient');
+            return;
+        }
+
         setIsLoading(true);
         try {
+            // Prepare recipient_id based on type
+            let finalRecipientId = null;
+
+            if (recipientType === 'all') {
+                finalRecipientId = orgId; // Will be handled in backend, but sending orgId for consistency
+            } else {
+                finalRecipientId = recipientId;
+            }
+
             await axios.post('/api/admin/notifications', {
                 sender_id: 1, // TODO: replace with session user_id
                 recipient_type: recipientType,
-                recipient_id: recipientType === 'all' ? null : recipientId,
+                recipient_id: finalRecipientId,
                 title,
                 message,
                 priority
@@ -96,7 +111,10 @@ const SendNotification = () => {
             case 'all':
                 return residents.length;
             case 'street':
-                return residents.filter(r => r.street_id === recipientId).length || '?';
+                // Count residents in selected street
+                const streetPlots = plots.filter(p => p.street_id === recipientId);
+                const streetPlotIds = streetPlots.map(p => p.plot_id);
+                return residents.filter(r => streetPlotIds.includes(r.plot_id)).length || '?';
             case 'plot':
                 return residents.filter(r => r.plot_id === recipientId).length || '?';
             case 'individual':
@@ -263,7 +281,7 @@ const SendNotification = () => {
                                     >
                                         {plots.map((p) => (
                                             <MenuItem key={p.plot_id} value={p.plot_id}>
-                                                {p.plot_no}
+                                                {p.plot_no} {p.street_name && `(${p.street_name})`}
                                             </MenuItem>
                                         ))}
                                     </Select>
@@ -287,7 +305,7 @@ const SendNotification = () => {
                                     >
                                         {residents.map((r) => (
                                             <MenuItem key={r.resident_id} value={r.resident_id}>
-                                                {r.name} ({r.email})
+                                                {r.name} ({r.email}) - {r.plot_no} {r.flat_no && `- ${r.flat_no}`}
                                             </MenuItem>
                                         ))}
                                     </Select>
@@ -358,7 +376,7 @@ const SendNotification = () => {
                             <Button
                                 variant="contained"
                                 onClick={handleSubmit}
-                                disabled={!title || !message || isLoading}
+                                disabled={!title || !message || isLoading || (recipientType !== 'all' && !recipientId)}
                                 startIcon={<Send />}
                                 sx={{
                                     background: 'linear-gradient(135deg, #06b6d4, #0891b2)',

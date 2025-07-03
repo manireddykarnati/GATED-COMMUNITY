@@ -1,13 +1,71 @@
 :root {
+    /* Light Theme (keeping for fallback) */
     --bg-color: #ffffff;
     --text-color: #222;
     --primary-color: #007bff;
     --primary-hover: #0056b3;
 }
 
+/* Dark Space Theme - matching homepage */
 [data-theme="dark"] {
-    --bg-color: #121212;
-    --text-color: #e0e0e0;
-    --primary-color: #1e90ff;
-    --primary-hover: #1565c0;
+    /* Main Background - Deep Space Navy */
+    --bg-color: #0f1419;
+    --bg-secondary: #1a202c;
+    --bg-tertiary: #2d3748;
+
+    /* Text Colors */
+    --text-color: #e2e8f0;
+    --text-secondary: #a0aec0;
+    --text-muted: #718096;
+
+    /* Brand Colors - Green Gradient like homepage */
+    --primary-color: #48bb78;
+    --primary-hover: #38a169;
+    --primary-gradient: linear-gradient(135deg, #48bb78 0%, #38a169 50%, #2f855a 100%);
+
+    /* Accent Colors */
+    --accent-blue: #4299e1;
+    --accent-purple: #805ad5;
+    --accent-orange: #ed8936;
+
+    /* Glass Morphism Effects */
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+
+    /* Sidebar Gradient */
+    --sidebar-gradient: linear-gradient(180deg, #1a202c 0%, #0f1419 100%);
+    --sidebar-border: rgba(72, 187, 120, 0.2);
+
+    /* Card Styles */
+    --card-bg: rgba(26, 32, 44, 0.8);
+    --card-border: rgba(255, 255, 255, 0.1);
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    --card-hover-shadow: 0 8px 40px rgba(72, 187, 120, 0.2);
+
+    /* Status Colors */
+    --success-color: #48bb78;
+    --warning-color: #ed8936;
+    --error-color: #f56565;
+    --info-color: #4299e1;
+}
+
+/* Light Theme Enhancements */
+[data-theme="light"] {
+    --bg-color: #f7fafc;
+    --bg-secondary: #edf2f7;
+    --bg-tertiary: #e2e8f0;
+    --text-color: #2d3748;
+    --text-secondary: #4a5568;
+    --text-muted: #718096;
+    --primary-color: #4299e1;
+    --primary-hover: #3182ce;
+    --primary-gradient: linear-gradient(135deg, #4299e1 0%, #3182ce 50%, #2b77cb 100%);
+    --glass-bg: rgba(255, 255, 255, 0.8);
+    --glass-border: rgba(0, 0, 0, 0.1);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    --card-bg: rgba(255, 255, 255, 0.9);
+    --card-border: rgba(0, 0, 0, 0.1);
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    --card-hover-shadow: 0 8px 40px rgba(66, 153, 225, 0.2);
 }
