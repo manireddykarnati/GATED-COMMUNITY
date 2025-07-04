@@ -1,7 +1,9 @@
 /* AdminLayout.css - Fixed Sidebar Navigation - COMPLETE WITH SCROLLING FIX */
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 /* Root Variables */
+
 :root {
     --admin-primary: #3b82f6;
     --admin-secondary: #8b5cf6;
@@ -10,7 +12,6 @@
     --admin-error: #ef4444;
     --admin-info: #06b6d4;
     --sidebar-width: 280px;
-
     /* Dark Theme */
     --dark-bg-primary: #0a0b1e;
     --dark-bg-secondary: #1a1b3a;
@@ -20,7 +21,6 @@
     --dark-text-primary: #ffffff;
     --dark-text-secondary: #cbd5e1;
     --dark-border: rgba(255, 255, 255, 0.1);
-
     /* Light Theme */
     --light-bg-primary: #f8fafc;
     --light-bg-secondary: #f1f5f9;
@@ -32,7 +32,9 @@
     --light-border: rgba(0, 0, 0, 0.1);
 }
 
+
 /* CRITICAL: Prevent any scrolling issues */
+
 * {
     box-sizing: border-box;
 }
@@ -44,7 +46,9 @@ body {
     padding: 0;
 }
 
+
 /* Base Layout */
+
 .admin-layout {
     min-height: 100vh;
     font-family: 'Inter', sans-serif;
@@ -66,7 +70,9 @@ body {
     color: var(--light-text-primary);
 }
 
+
 /* Background Effects */
+
 .admin-bg-effects {
     position: fixed;
     top: 0;
@@ -218,7 +224,9 @@ body {
     animation-delay: 2.3s;
 }
 
+
 /* Sidebar Styles */
+
 .admin-sidebar {
     height: 100vh;
     position: fixed;
@@ -242,7 +250,9 @@ body {
     border-right-color: var(--light-border);
 }
 
+
 /* Sidebar Header */
+
 .sidebar-header {
     padding: 1.5rem 1rem;
     border-bottom: 1px solid var(--dark-border);
@@ -318,7 +328,9 @@ body {
     margin: 0 !important;
 }
 
+
 /* Admin Profile Section */
+
 .admin-profile {
     padding: 1rem;
     display: flex;
@@ -363,7 +375,9 @@ body {
     font-size: 0.7rem !important;
 }
 
+
 /* Dividers */
+
 .header-divider,
 .profile-divider,
 .bottom-divider {
@@ -377,7 +391,9 @@ body {
     border-color: var(--light-border) !important;
 }
 
+
 /* Navigation List */
+
 .nav-list {
     padding: 8px !important;
     flex: 1;
@@ -426,9 +442,7 @@ body {
 }
 
 .nav-item.active {
-    background: linear-gradient(135deg,
-            rgba(59, 130, 246, 0.15),
-            rgba(59, 130, 246, 0.05)) !important;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05)) !important;
     border: 1px solid rgba(59, 130, 246, 0.3) !important;
 }
 
@@ -497,7 +511,9 @@ body {
     box-shadow: 0 0 10px #3b82f6;
 }
 
+
 /* Sidebar Bottom */
+
 .sidebar-bottom {
     padding: 1rem;
     margin-top: auto;
@@ -539,7 +555,9 @@ body {
     box-shadow: 0 0 20px rgba(239, 68, 68, 0.3) !important;
 }
 
+
 /* AppBar Styles */
+
 .admin-appbar {
     background: rgba(10, 11, 30, 0.8) !important;
     backdrop-filter: blur(30px) !important;
@@ -665,7 +683,9 @@ body {
     animation: pulse-notification 2s infinite;
 }
 
+
 /* CRITICAL: Main Content Layout - FIXED FOR SCROLLING */
+
 .admin-main-content {
     position: relative;
     z-index: 10;
@@ -697,7 +717,9 @@ body {
     /* CRITICAL: Include padding in width */
 }
 
+
 /* CRITICAL: Ensure tables and content can scroll */
+
 .MuiPaper-root {
     max-width: 100% !important;
     overflow-x: auto !important;
@@ -714,13 +736,14 @@ body {
     overflow-x: auto !important;
 }
 
+
 /* Mobile Responsiveness - FIXED */
+
 @media (max-width: 900px) {
     .admin-appbar {
         left: 0 !important;
         width: 100% !important;
     }
-
     .admin-main-content {
         margin-left: 0 !important;
         width: 100% !important;
@@ -728,27 +751,22 @@ body {
         height: 100vh !important;
         overflow-y: auto !important;
     }
-
     .appbar-toolbar {
         padding: 0 1rem !important;
     }
-
     .page-title {
         font-size: 1.25rem !important;
     }
-
     .content-wrapper {
         padding: 0.5rem !important;
         width: 100% !important;
         min-height: calc(100vh - 70px) !important;
     }
-
     .admin-profile {
         flex-direction: column;
         text-align: center;
         gap: 0.5rem;
     }
-
     .bottom-actions {
         flex-direction: column;
         align-items: center;
@@ -759,50 +777,43 @@ body {
     .appbar-actions {
         gap: 0.25rem;
     }
-
     .action-icon {
         width: 2rem !important;
         height: 2rem !important;
     }
-
     .page-title-section {
         margin-left: 0.5rem;
     }
-
     .page-title {
         font-size: 1.1rem !important;
     }
-
     .page-subtitle {
         font-size: 0.75rem !important;
     }
 }
 
-/* Animations */
-@keyframes float {
 
+/* Animations */
+
+@keyframes float {
     0%,
     100% {
         transform: translateY(0) rotate(0deg);
     }
-
     33% {
         transform: translateY(-20px) rotate(120deg);
     }
-
     66% {
         transform: translateY(10px) rotate(240deg);
     }
 }
 
 @keyframes twinkle {
-
     0%,
     100% {
         opacity: 0.3;
         transform: scale(1);
     }
-
     50% {
         opacity: 1;
         transform: scale(1.5);
@@ -810,13 +821,11 @@ body {
 }
 
 @keyframes sparkle {
-
     0%,
     100% {
         opacity: 1;
         transform: scale(1) rotate(0deg);
     }
-
     50% {
         opacity: 0.7;
         transform: scale(1.2) rotate(180deg);
@@ -824,13 +833,11 @@ body {
 }
 
 @keyframes pulse {
-
     0%,
     100% {
         opacity: 0.8;
         transform: scale(1);
     }
-
     50% {
         opacity: 1;
         transform: scale(1.05);
@@ -838,18 +845,18 @@ body {
 }
 
 @keyframes pulse-notification {
-
     0%,
     100% {
         transform: scale(1);
     }
-
     50% {
         transform: scale(1.1);
     }
 }
 
+
 /* Loading States */
+
 .admin-layout:not(.loaded) .admin-sidebar,
 .admin-layout:not(.loaded) .admin-appbar,
 .admin-layout:not(.loaded) .content-wrapper {
@@ -865,7 +872,9 @@ body {
     transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+
 /* Scrollbar Styling */
+
 .admin-sidebar::-webkit-scrollbar {
     width: 4px;
 }
@@ -883,7 +892,9 @@ body {
     background: rgba(255, 255, 255, 0.3);
 }
 
+
 /* Main content scrollbar styling */
+
 .admin-main-content::-webkit-scrollbar {
     width: 6px;
 }
@@ -901,7 +912,9 @@ body {
     background: rgba(255, 255, 255, 0.3);
 }
 
+
 /* Focus States for Accessibility */
+
 .nav-item:focus-visible,
 .action-btn:focus-visible,
 .action-icon:focus-visible {
@@ -909,52 +922,51 @@ body {
     outline-offset: 2px;
 }
 
-/* Print Styles */
-@media print {
 
+/* Print Styles */
+
+@media print {
     .admin-sidebar,
     .admin-appbar {
         display: none !important;
     }
-
     .admin-main-content {
         width: 100% !important;
         margin: 0 !important;
     }
-
     .admin-bg-effects {
         display: none !important;
     }
 }
 
+
 /* High Contrast Mode */
+
 @media (prefers-contrast: high) {
     .admin-sidebar {
         border-right-width: 2px;
     }
-
     .nav-item {
         border: 1px solid transparent;
     }
-
     .nav-item.active {
         border-color: currentColor;
     }
-
     .action-btn,
     .action-icon {
         border-width: 2px;
     }
 }
 
+
 /* Reduced Motion */
+
 @media (prefers-reduced-motion: reduce) {
     * {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
-
     .bg-shape,
     .particle {
         animation: none !important;
