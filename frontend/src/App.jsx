@@ -2,6 +2,9 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 
+// ✅ Import axios configuration (this must be imported early)
+import './config/axios';
+
 import HomePage from './components/HomePage';
 import Login from "./components/Login";
 import Register from "./components/RegistrationPage";

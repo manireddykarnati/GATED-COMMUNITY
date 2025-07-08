@@ -1,6 +1,7 @@
 // components/admin/AdminLayout.jsx - FIXED NAVIGATION
 import React, { useState, useEffect, useCallback } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import axios from '../../config/axios'; // ✅ Import configured axios
 import {
     AppBar, Toolbar, Typography, CssBaseline, Drawer, List, ListItem, ListItemIcon,
     ListItemText, Box, IconButton, Avatar, Chip, Divider, Tooltip, Popover,
@@ -106,12 +107,10 @@ const AdminLayout = () => {
 
     const loadRecentRequests = useCallback(async () => {
         try {
-            const response = await fetch('/api/admin/maintenance-requests/recent');
-            if (response.ok) {
-                const data = await response.json();
-                setRecentRequests(data);
-                setRequestsCount(data.filter(req => req.status === 'open').length);
-            }
+            // ✅ Changed from fetch to axios
+            const response = await axios.get('/api/admin/maintenance-requests/recent');
+            setRecentRequests(response.data);
+            setRequestsCount(response.data.filter(req => req.status === 'open').length);
         } catch (error) {
             console.error('Error loading recent requests:', error);
         }

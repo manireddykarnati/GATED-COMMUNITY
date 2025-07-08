@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from '../config/axios'; // ✅ Import configured axios
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
 
@@ -26,7 +26,8 @@ function Login() {
     setMessage('');
 
     try {
-      const res = await axios.post('http://localhost:5001/api/login', {
+      // ✅ Just change the URL to relative path - axios will add the base URL automatically
+      const res = await axios.post('/api/login', {
         user_name,
         password
       });
