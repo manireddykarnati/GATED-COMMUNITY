@@ -1,4 +1,4 @@
-// SendNotification.jsx - FIXED
+// SendNotification.jsx - FIXED with proper light theme support
 import React, { useState, useEffect } from 'react';
 import {
     Box, Typography, TextField, Button, MenuItem, FormControl, InputLabel, Select, Paper, Grid, Alert
@@ -125,28 +125,16 @@ const SendNotification = () => {
     };
 
     return (
-        <div style={{ padding: '24px', width: '100%' }}>
+        <div style={{ padding: '24px', width: '100%' }} data-component="notification" className="send-notification">
             {/* Page Header */}
             <motion.div
-                style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '2rem',
-                    padding: '1.5rem 2rem',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    backdropFilter: 'blur(30px)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '20px'
-                }}
+                className="admin-page-header"
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
             >
                 <div>
-                    <Typography variant="h4" sx={{
-                        color: '#ffffff',
-                        fontWeight: 800,
+                    <Typography variant="h4" className="page-title" sx={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '0.5rem'
@@ -154,7 +142,7 @@ const SendNotification = () => {
                         <Notifications sx={{ color: '#06b6d4' }} />
                         Send Notifications
                     </Typography>
-                    <Typography variant="body2" sx={{ color: '#94a3b8', mt: 0.5 }}>
+                    <Typography variant="body2" className="page-subtitle">
                         Broadcast announcements to residents
                     </Typography>
                 </div>
@@ -185,19 +173,13 @@ const SendNotification = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, delay: 0.2 }}
                     >
-                        <Paper sx={{
-                            background: 'rgba(255, 255, 255, 0.05)',
-                            backdropFilter: 'blur(30px)',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                            borderRadius: '20px',
-                            p: 4
-                        }}>
-                            <Typography variant="h6" sx={{ color: '#ffffff', mb: 3, fontWeight: 600 }}>
+                        <Paper sx={{ p: 4 }}>
+                            <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
                                 📝 Create New Notification
                             </Typography>
 
                             <FormControl fullWidth sx={{ mb: 3 }}>
-                                <InputLabel sx={{ color: '#94a3b8' }}>Recipient Type</InputLabel>
+                                <InputLabel>Recipient Type</InputLabel>
                                 <Select
                                     value={recipientType}
                                     onChange={(e) => {
@@ -205,13 +187,6 @@ const SendNotification = () => {
                                         setRecipientId('');
                                     }}
                                     label="Recipient Type"
-                                    sx={{
-                                        background: 'rgba(255, 255, 255, 0.05)',
-                                        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 255, 255, 0.2)' },
-                                        '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 255, 255, 0.3)' },
-                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#06b6d4' },
-                                        '& .MuiSelect-select': { color: '#e2e8f0' }
-                                    }}
                                 >
                                     <MenuItem value="all">
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -242,18 +217,11 @@ const SendNotification = () => {
 
                             {recipientType === 'street' && (
                                 <FormControl fullWidth sx={{ mb: 3 }}>
-                                    <InputLabel sx={{ color: '#94a3b8' }}>Select Street</InputLabel>
+                                    <InputLabel>Select Street</InputLabel>
                                     <Select
                                         value={recipientId}
                                         onChange={(e) => setRecipientId(e.target.value)}
                                         label="Select Street"
-                                        sx={{
-                                            background: 'rgba(255, 255, 255, 0.05)',
-                                            '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 255, 255, 0.2)' },
-                                            '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 255, 255, 0.3)' },
-                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#06b6d4' },
-                                            '& .MuiSelect-select': { color: '#e2e8f0' }
-                                        }}
                                     >
                                         {streets.map((s) => (
                                             <MenuItem key={s.street_id} value={s.street_id}>
@@ -266,18 +234,11 @@ const SendNotification = () => {
 
                             {recipientType === 'plot' && (
                                 <FormControl fullWidth sx={{ mb: 3 }}>
-                                    <InputLabel sx={{ color: '#94a3b8' }}>Select Plot</InputLabel>
+                                    <InputLabel>Select Plot</InputLabel>
                                     <Select
                                         value={recipientId}
                                         onChange={(e) => setRecipientId(e.target.value)}
                                         label="Select Plot"
-                                        sx={{
-                                            background: 'rgba(255, 255, 255, 0.05)',
-                                            '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 255, 255, 0.2)' },
-                                            '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 255, 255, 0.3)' },
-                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#06b6d4' },
-                                            '& .MuiSelect-select': { color: '#e2e8f0' }
-                                        }}
                                     >
                                         {plots.map((p) => (
                                             <MenuItem key={p.plot_id} value={p.plot_id}>
@@ -290,18 +251,11 @@ const SendNotification = () => {
 
                             {recipientType === 'individual' && (
                                 <FormControl fullWidth sx={{ mb: 3 }}>
-                                    <InputLabel sx={{ color: '#94a3b8' }}>Select Resident</InputLabel>
+                                    <InputLabel>Select Resident</InputLabel>
                                     <Select
                                         value={recipientId}
                                         onChange={(e) => setRecipientId(e.target.value)}
                                         label="Select Resident"
-                                        sx={{
-                                            background: 'rgba(255, 255, 255, 0.05)',
-                                            '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 255, 255, 0.2)' },
-                                            '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 255, 255, 0.3)' },
-                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#06b6d4' },
-                                            '& .MuiSelect-select': { color: '#e2e8f0' }
-                                        }}
                                     >
                                         {residents.map((r) => (
                                             <MenuItem key={r.resident_id} value={r.resident_id}>
@@ -318,17 +272,7 @@ const SendNotification = () => {
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                                 required
-                                sx={{
-                                    mb: 3,
-                                    '& .MuiOutlinedInput-root': {
-                                        background: 'rgba(255, 255, 255, 0.05)',
-                                        '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' },
-                                        '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.3)' },
-                                        '&.Mui-focused fieldset': { borderColor: '#06b6d4' }
-                                    },
-                                    '& .MuiInputLabel-root': { color: '#94a3b8' },
-                                    '& .MuiInputBase-input': { color: '#e2e8f0' }
-                                }}
+                                sx={{ mb: 3 }}
                             />
 
                             <TextField
@@ -339,32 +283,15 @@ const SendNotification = () => {
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
                                 required
-                                sx={{
-                                    mb: 3,
-                                    '& .MuiOutlinedInput-root': {
-                                        background: 'rgba(255, 255, 255, 0.05)',
-                                        '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' },
-                                        '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.3)' },
-                                        '&.Mui-focused fieldset': { borderColor: '#06b6d4' }
-                                    },
-                                    '& .MuiInputLabel-root': { color: '#94a3b8' },
-                                    '& .MuiInputBase-input': { color: '#e2e8f0' }
-                                }}
+                                sx={{ mb: 3 }}
                             />
 
                             <FormControl fullWidth sx={{ mb: 3 }}>
-                                <InputLabel sx={{ color: '#94a3b8' }}>Priority</InputLabel>
+                                <InputLabel>Priority</InputLabel>
                                 <Select
                                     value={priority}
                                     onChange={(e) => setPriority(e.target.value)}
                                     label="Priority"
-                                    sx={{
-                                        background: 'rgba(255, 255, 255, 0.05)',
-                                        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 255, 255, 0.2)' },
-                                        '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 255, 255, 0.3)' },
-                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#06b6d4' },
-                                        '& .MuiSelect-select': { color: '#e2e8f0' }
-                                    }}
                                 >
                                     <MenuItem value="low">🔵 Low Priority</MenuItem>
                                     <MenuItem value="normal">⚪ Normal</MenuItem>
@@ -379,15 +306,6 @@ const SendNotification = () => {
                                 disabled={!title || !message || isLoading || (recipientType !== 'all' && !recipientId)}
                                 startIcon={<Send />}
                                 sx={{
-                                    background: 'linear-gradient(135deg, #06b6d4, #0891b2)',
-                                    '&:hover': {
-                                        background: 'linear-gradient(135deg, #0891b2, #0e7490)',
-                                        transform: 'translateY(-2px)',
-                                    },
-                                    '&:disabled': {
-                                        background: 'rgba(156, 163, 175, 0.3)',
-                                        color: 'rgba(156, 163, 175, 0.7)'
-                                    },
                                     borderRadius: '12px',
                                     px: 4,
                                     py: 1.5,
@@ -408,26 +326,19 @@ const SendNotification = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, delay: 0.4 }}
                     >
-                        <Paper sx={{
-                            background: 'rgba(255, 255, 255, 0.05)',
-                            backdropFilter: 'blur(30px)',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                            borderRadius: '20px',
-                            p: 3,
-                            mb: 3
-                        }}>
-                            <Typography variant="h6" sx={{ color: '#ffffff', mb: 2, fontWeight: 600 }}>
+                        <Paper sx={{ p: 3, mb: 3 }}>
+                            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                                 📊 Notification Summary
                             </Typography>
 
                             <Box sx={{ mb: 2 }}>
-                                <Typography variant="body2" sx={{ color: '#94a3b8', mb: 1 }}>
+                                <Typography variant="body2" sx={{ mb: 1 }}>
                                     Recipients:
                                 </Typography>
                                 <Typography variant="h4" sx={{ color: '#06b6d4', fontWeight: 'bold' }}>
                                     {getRecipientCount()}
                                 </Typography>
-                                <Typography variant="body2" sx={{ color: '#cbd5e1' }}>
+                                <Typography variant="body2">
                                     {recipientType === 'all' ? 'All residents' :
                                         recipientType === 'street' ? 'Street residents' :
                                             recipientType === 'plot' ? 'Plot residents' : 'Individual resident'}
@@ -435,7 +346,7 @@ const SendNotification = () => {
                             </Box>
 
                             <Box sx={{ mb: 2 }}>
-                                <Typography variant="body2" sx={{ color: '#94a3b8', mb: 1 }}>
+                                <Typography variant="body2" sx={{ mb: 1 }}>
                                     Priority:
                                 </Typography>
                                 <Box sx={{
@@ -459,26 +370,19 @@ const SendNotification = () => {
 
                         {/* Preview */}
                         {(title || message) && (
-                            <Paper sx={{
-                                background: 'rgba(255, 255, 255, 0.05)',
-                                backdropFilter: 'blur(30px)',
-                                border: '1px solid rgba(255, 255, 255, 0.1)',
-                                borderRadius: '20px',
-                                p: 3
-                            }}>
-                                <Typography variant="h6" sx={{ color: '#ffffff', mb: 2, fontWeight: 600 }}>
+                            <Paper sx={{ p: 3 }}>
+                                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                                     👀 Preview
                                 </Typography>
 
                                 <Box sx={{
                                     p: 2,
-                                    background: 'rgba(255, 255, 255, 0.1)',
+                                    background: 'rgba(0, 0, 0, 0.05)',
                                     borderRadius: '12px',
-                                    border: '1px solid rgba(255, 255, 255, 0.2)'
+                                    border: '1px solid rgba(0, 0, 0, 0.1)'
                                 }}>
                                     {title && (
                                         <Typography variant="subtitle1" sx={{
-                                            color: '#ffffff',
                                             fontWeight: 600,
                                             mb: 1
                                         }}>
@@ -487,7 +391,6 @@ const SendNotification = () => {
                                     )}
                                     {message && (
                                         <Typography variant="body2" sx={{
-                                            color: '#cbd5e1',
                                             lineHeight: 1.6,
                                             whiteSpace: 'pre-wrap'
                                         }}>
@@ -500,7 +403,6 @@ const SendNotification = () => {
                     </motion.div>
                 </Grid>
             </Grid>
-
         </div>
     );
 };
